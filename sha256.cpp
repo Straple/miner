@@ -3,7 +3,7 @@
 #include <iomanip>
 #include <sstream>
 
-std::string to_hex(unsigned char s) {
+std::string to_hex_symbol(unsigned char s) {
     std::stringstream ss;
     ss << std::hex << static_cast<int>(s);
     return ss.str();
