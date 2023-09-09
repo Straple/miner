@@ -60,9 +60,10 @@ std::string hex_to_bytes(const std::string &hex_str) {
 
 std::string bytes_to_hex(const std::string &bytes) {
     std::string hex;
+    hex.reserve(bytes.size() * 2);
     for (unsigned char byte : bytes) {
-        hex += byte_to_hex(byte % 16);
-        hex += byte_to_hex(byte / 16);
+        hex += byte_to_hex(byte >> 4);
+        hex += byte_to_hex(byte & 0xf);
     }
     return hex;
 }

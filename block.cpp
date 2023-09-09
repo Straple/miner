@@ -20,7 +20,7 @@
         target += '0';
     }
     std::reverse(target.begin(), target.end());
-    return target;
+    return hex_to_bytes(target);
 }
 
 std::string block::calc_hash(uint32_t nonce) {
@@ -46,7 +46,7 @@ std::string block::calc_hash(uint32_t nonce) {
             (nonce >> (8 * (4 - i - 1))) & 0xff;
     }
 
-    return reverse_str(bytes_to_hex(sha256(sha256(save_bytes_data))));
+    return reverse_str(sha256(sha256(save_bytes_data)));
 }
 
 void block::build_data() {

@@ -8,6 +8,28 @@ using namespace std::chrono;
 
 #include "bits_manipulation.hpp"
 
+std::string pretty_hashrate(uint64_t hashrate) {
+    auto unit = [&]() {
+        if (hashrate < 1e3) {
+            return "";
+        } else if (hashrate < 1e6) {
+            hashrate /= 1e3;
+            return "K";
+        } else if (hashrate < 1e9) {
+            hashrate /= 1e6;
+            return "M";
+        } else if (hashrate < 1e12) {
+            hashrate /= 1e9;
+            return "G";
+        } else if (hashrate < 1e15) {
+            hashrate /= 1e12;
+            return "T";
+        }
+    };
+    std::string s = unit();
+    return std::to_string(hashrate) + s + "H/s";
+}
+
 int main() {
     block b = {
         2,
@@ -34,13 +56,20 @@ int main() {
 
     auto start = steady_clock::now();
 
-    uint64_t N = 0x100000000;
+    const uint64_t N = 0x100000000;
 
-    uint64_t nonce = 0;
+    uint64_t nonce = 856192328;
     std::string target = b.calc_target();
+    std::cout << "target: " << target << '\n';
     while (nonce < N) {
+        if (nonce % 0x001000000 == 0) {
+            std::cout << "progress: " << nonce * 1.0 / N * 100 << "%"
+                      << std::endl;
+        }
         if (b.calc_hash(nonce) < target) {
-            std::cout << nonce << ": " << b.calc_hash(nonce) << std::endl;
+            std::cout << nonce << ": " << bytes_to_hex(b.calc_hash(nonce))
+                      << std::endl;
+            // break;
         }
         nonce++;
     }
@@ -49,11 +78,13 @@ int main() {
     auto duration = stop - start;
 
     // Nvidia 3050: 10.63 MH/s
-    // me: 952H/s -> 57444H/s -> 62398H/s
+    // me: 952H/s -> 57444H/s -> 62398H/s -> 4MH/s
 
-    double hashrate =
+    // 800s перебрал весь nonce
+
+    int64_t hashrate =
         1.0 * N / (duration_cast<nanoseconds>(duration).count() / 1e9);
-    std::cout << hashrate << "H/s\n";
+    std::cout << pretty_hashrate(hashrate) << "\n";
     std::cout << "time calculating: "
               << duration_cast<nanoseconds>(duration).count() / 1e9 << "s\n";
 }
