@@ -9,7 +9,7 @@ find_package(OpenSSL REQUIRED)
 #ENDIF()
 
 add_executable(miner
-        main.cpp sha256.cpp)
+        main.cpp sha256.cpp bits_manipulation.cpp block.cpp)
 
 target_link_libraries(miner OpenSSL::SSL)
 
