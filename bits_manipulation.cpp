@@ -2,6 +2,7 @@
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
+#include <vector>
 
 std::string byte_to_hex(unsigned char byte) {
     std::stringstream ss;
