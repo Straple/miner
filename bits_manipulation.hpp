@@ -9,7 +9,9 @@ std::string integer_to_hex(uint64_t integer, uint64_t len);
 
 std::string integer_to_bytes(uint64_t integer, uint64_t len);
 
-uint32_t hex_to_integer(char hex_code);
+uint64_t hex_to_integer(char hex_code);
+
+uint64_t hex_to_integer(std::string hex_str);
 
 std::string hex_to_bytes(const std::string &hex_str);
 

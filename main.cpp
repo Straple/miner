@@ -272,7 +272,10 @@ int main() {
         std::cout << "extranonce2_size: " << extranonce2_size << "\n\n";
     }
 
-    {
+    std::string previous_block_hash, coinb1, coinb2;
+    uint32_t timestamp, nbits, version;
+    std::vector<std::string> merkle_branch;
+    do {
         std::string str;
         sockstream >> str;  // skip
         sockstream >> str;
@@ -281,18 +284,42 @@ int main() {
 
         json data_json = json::parse(str);
 
-        std::string prev_hash = data_json["params"][1];
-        std::string coinb1 = data_json["params"][2];
-        std::string coinb2 = data_json["params"][3];
+        previous_block_hash = data_json["params"][1];
+        coinb1 = data_json["params"][2];
+        coinb2 = data_json["params"][3];
+        auto merkle_branch = data_json["params"][4];
+        version = hex_to_integer(reverse_str(data_json["params"][5]));
+        nbits = hex_to_integer(data_json["params"][6]);
+        timestamp = hex_to_integer(data_json["params"][7]);
+
 
         std::cout << "job_id: " << data_json["params"][0] << "\n\n";
-        std::cout << "prev_hash: \"" << prev_hash << "\"\n\n";
+        std::cout << "previous_block_hash: \"" << previous_block_hash << "\"\n\n";
         std::cout << "coinb1: \"" << coinb1 << "\"\n\n";
         std::cout << "coinb2: \"" << coinb2 << "\"\n\n";
-        std::cout << "merkle_branch: " << data_json["params"][4] << "\n\n";
-        std::cout << "version: " << data_json["params"][5] << "\n\n";
-        std::cout << "nbits: " << data_json["params"][6] << "\n\n";
-        std::cout << "ntime: " << data_json["params"][7] << "\n\n";
+        std::cout << "merkle_branch: " << merkle_branch << "\n\n";
+        std::cout << "version: " << version << "\n\n";
+        std::cout << "nbits: " << nbits << "\n\n";
+        std::cout << "timestamp: " << timestamp << "\n\n";
         std::cout << "clean_jobs: " << data_json["params"][8] << "\n\n";
-    }
+
+        for(auto hash : merkle_branch){
+            merkle_branch.push_back(hash);
+        }
+    } while (0);
+
+    block b;
+    b.version = version;
+    b.previous_block_hash = previous_block_hash;
+    b.timestamp = timestamp;
+    b.nbits = nbits;
+    b.coinb1 = coinb1;
+    b.coinb2 = coinb2;
+    b.extranonce1 = extranonce1;
+    b.extranonce2_size = extranonce2_size;
+    b.merkle_branch = merkle_branch;
+
+    std::cout << "target: " << bytes_to_hex(b.calc_target()) << "\n\n";
+
+    std::cout << b.calc_hash(0) << '\n';
 }
