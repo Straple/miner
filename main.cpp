@@ -6,6 +6,7 @@
 #include <string>
 #include <vector>
 #include "block.hpp"
+
 using namespace std::chrono;
 
 #include "bits_manipulation.hpp"
@@ -215,152 +216,83 @@ uint32_t find_hash(block b) {
               << duration_cast<nanoseconds>(duration).count() / 1e9 << "s\n";
 }*/
 
-// #include <boost/asio/ssl.hpp>
-// #include <boost/beast.hpp>
-// #include <boost/beast/ssl.hpp>
-// #include <iostream>
-
 #include "nlohmann/json.hpp"
-using json = nlohmann::json;
 
+using json = nlohmann::json;
 using namespace boost::asio;
 using ip::tcp;
 
 int main() {
-    //"51.81.56.15" ip адрес сервера 'solo.ckpool.org'
     std::string ip_address = "solo.ckpool.org";
     std::string port = "3333";
 
-    /*{
-        std::cout << "IP addresses: \n";
-        boost::asio::io_service io_service;
-        boost::asio::ip::tcp::resolver resolver(io_service);
-        boost::asio::ip::tcp::resolver::query query(ip_address, "3333");
-        for (boost::asio::ip::tcp::resolver::iterator i =
-                 resolver.resolve(query);
-             i != boost::asio::ip::tcp::resolver::iterator(); ++i) {
-            boost::asio::ip::tcp::endpoint end = *i;
-            std::cout << end.address() << '\n';
-        }
-        std::cout << '\n';
-    }*/
-
     boost::asio::io_context io_context;
-    tcp::resolver resolver(io_context);
-    auto endpoints = resolver.resolve(ip_address, port);
 
-    boost::system::error_code error_code;
+    tcp::iostream sockstream([&]() {
+        tcp::socket socket(io_context);
 
-    tcp::socket socket(io_context);
-    boost::asio::connect(socket, endpoints, error_code);
+        tcp::resolver resolver(io_context);
+        auto endpoints = resolver.resolve(ip_address, port);
 
-    ASSERT(
-        !error_code, "failed connect socket, message: " + error_code.message()
-    );
-
-    std::cout << socket.is_open() << '\n';
-
-    std::size_t bytes_send = boost::asio::write(
-        socket,
-        boost::asio::buffer(
-            "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": []}\n"
-        ),
-        error_code
-    );
-
-    ASSERT(!error_code, "failed send hello, message: " + error_code.message());
-
-    /*std::cout
-        << std::string(
-               "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": []}\n"
-           )
-               .size()
-        << '\n';
-    std::cout << bytes_send << '\n';*/
-
-    std::string response(1024, 0);
-    socket.read_some(boost::asio::buffer(response.data(), response.size()));
-    // boost::asio::read(socket, boost::asio::buffer(response,
-    // response.size()));
-
-    std::cout << "response: '" << response << "'\n";
-
-    std::vector<std::string> lines;
-    {
-        std::string accum;
-        for (char c : response) {
-            if (c == '\n') {
-                lines.push_back(accum);
-                accum = "";
-            } else {
-                accum += c;
-            }
-        }
-    }
-
-    {
-        json data = json::parse(lines[0]);
-        /*std::cout << data["result"] << '\n';
-        for(auto x : data["result"]){
-            std::cout << x << '\n';
-        }
-        std::cout << data["result"][1] << '\n';*/
-
-        std::string extranonce1 = data["result"][1];
-        int extranonce2_size = data["result"][2];
-
-        std::cout << "extranonce1: " << extranonce1 << '\n';
-        std::cout << "extranonce2_size: " << extranonce2_size << '\n';
-
-        std::cout << "==================\n";
-
-        // socket.write(b'{"params": ["' + address.encode() + b'", "password"],
-        // "id": 2, "method": "mining.authorize"}\n')
-        std::size_t bytes_send = boost::asio::write(
-            socket,
-            boost::asio::buffer(
-                "{\"params\": [\"" +
-                std::string("16p9y6EstGYcnofGNvUJMEGKiAWhAr1uR8") +
-                "\", \"password\"], \"id\": 2, \"method\": "
-                "\"mining.authorize\"}\n"
-            ),
-            error_code
-        );
+        boost::system::error_code error_code;
+        boost::asio::connect(socket, endpoints, error_code);
 
         ASSERT(
             !error_code,
-            "failed send miner authorize, message: " + error_code.message()
+            "failed connect to server, message: " + error_code.message()
         );
+        return socket;
+    }());
 
-        response = "";
+    // authorize
+    {
+        sockstream << "{\"id\": 1, \"method\": \"mining.subscribe\", "
+                      "\"params\": []}\n";
 
-        auto count_symbol = [](std::string s) {
-            int cnt = 0;
-            for (char c : s) {
-                cnt += c == '\n';
-            }
-            return cnt;
-        };
-
-        while (count_symbol(response) < 4) {
-            std::string line(1024 * 16, 0);
-            try {
-                //socket.read_some(boost::asio::buffer(line.data(),
-                // line.size()));
-
-                boost::asio::read(
-                    socket, boost::asio::buffer(line.data(), line.size())
-                );
-            } catch (...) {
-
-            }
-            response += line;
-            std::cout << response << '\n';
-        }
-
-        std::cout << response << '\n';
+        sockstream << "{\"params\": [\"" +
+                          std::string("16p9y6EstGYcnofGNvUJMEGKiAWhAr1uR8") +
+                          "\", \"password\"], \"id\": 2, \"method\": "
+                          "\"mining.authorize\"}\n";
     }
 
-    socket.close();
-    std::cout << socket.is_open() << '\n';
+    std::string extranonce1;
+    int extranonce2_size;
+    // get extranonce
+    {
+        std::string str;
+        sockstream >> str;
+        // std::cout << "RESPONSE: >" << str << "<\n";
+
+        json data = json::parse(str);
+
+        extranonce1 = data["result"][1];
+        extranonce2_size = data["result"][2];
+
+        std::cout << "extranonce1: " << extranonce1 << "\n\n";
+        std::cout << "extranonce2_size: " << extranonce2_size << "\n\n";
+    }
+
+    {
+        std::string str;
+        sockstream >> str;  // skip
+        sockstream >> str;
+
+        // std::cout << "DATA: >" << str << "<\n";
+
+        json data_json = json::parse(str);
+
+        std::string prev_hash = data_json["params"][1];
+        std::string coinb1 = data_json["params"][2];
+        std::string coinb2 = data_json["params"][3];
+
+        std::cout << "job_id: " << data_json["params"][0] << "\n\n";
+        std::cout << "prev_hash: \"" << prev_hash << "\"\n\n";
+        std::cout << "coinb1: \"" << coinb1 << "\"\n\n";
+        std::cout << "coinb2: \"" << coinb2 << "\"\n\n";
+        std::cout << "merkle_branch: " << data_json["params"][4] << "\n\n";
+        std::cout << "version: " << data_json["params"][5] << "\n\n";
+        std::cout << "nbits: " << data_json["params"][6] << "\n\n";
+        std::cout << "ntime: " << data_json["params"][7] << "\n\n";
+        std::cout << "clean_jobs: " << data_json["params"][8] << "\n\n";
+    }
 }
