@@ -1,5 +1,5 @@
-#include "sha256.hpp"
 #include <openssl/sha.h>
+#include "openssl_sha256.hpp"
 
 std::string sha256(const std::string &str) {
     std::string hash(SHA256_DIGEST_LENGTH, 0);
