@@ -35,37 +35,16 @@ std::vector<byte_t> SHA256::digest() {
     return hash;
 }
 
-uint_t SHA256::rotr(uint_t x, uint32_t n) {
-    return (x >> n) | (x << (32 - n));
-}
-
-uint_t SHA256::choose(uint_t e, uint_t f, uint_t g) {
-    return (e & f) ^ (~e & g);
-}
-
-uint_t SHA256::majority(uint_t a, uint_t b, uint_t c) {
-    return (a & (b | c)) | (b & c);
-}
-
-uint_t SHA256::sig0(uint_t x) {
-    return SHA256::rotr(x, 7) ^ SHA256::rotr(x, 18) ^ (x >> 3);
-}
-
-uint_t SHA256::sig1(uint_t x) {
-    return SHA256::rotr(x, 17) ^ SHA256::rotr(x, 19) ^ (x >> 10);
-}
-
 void SHA256::transform() {
     uint_t maj, xorA, ch, xorE, sum, newA, newE, m[64];
     uint_t state[8];
 
-    for (uint8_t i = 0, j = 0; i < 16;
-         i++, j += 4) {// Split data in 32 bit blocks for the 16 first words
+    for (uint8_t i = 0, j = 0; i < 16; i++, j += 4) {// Split data in 32 bit blocks for the 16 first words
         m[i] = (uint_t(m_data[j]) << 24) | (uint_t(m_data[j + 1]) << 16) | (uint_t(m_data[j + 2]) << 8) | uint_t(m_data[j + 3]);
     }
 
-    for (uint8_t k = 16; k < 64; k++) {// Remaining 48 blocks
-        m[k] = SHA256::sig1(m[k - 2]) + m[k - 7] + SHA256::sig0(m[k - 15]) + m[k - 16];
+    for (uint8_t k = 16; k < 64; k++) { // Remaining 48 blocks
+        m[k] = sig1(m[k - 2]) + m[k - 7] + sig0(m[k - 15]) + m[k - 16];
     }
 
     for (uint8_t i = 0; i < 8; i++) {
@@ -73,14 +52,14 @@ void SHA256::transform() {
     }
 
     for (uint8_t i = 0; i < 64; i++) {
-        maj = SHA256::majority(state[0], state[1], state[2]);
-        xorA = SHA256::rotr(state[0], 2) ^ SHA256::rotr(state[0], 13) ^ SHA256::rotr(state[0], 22);
+        maj = majority(state[0], state[1], state[2]);
+        xorA = rotr(state[0], 2) ^ rotr(state[0], 13) ^ rotr(state[0], 22);
 
         ch = choose(state[4], state[5], state[6]);
 
-        xorE = SHA256::rotr(state[4], 6) ^ SHA256::rotr(state[4], 11) ^ SHA256::rotr(state[4], 25);
+        xorE = rotr(state[4], 6) ^ rotr(state[4], 11) ^ rotr(state[4], 25);
 
-        sum = m[i] + uint_t(K[i]) + state[7] + ch + xorE;
+        sum = m[i] + K[i] + state[7] + ch + xorE;
         newA = xorA + maj + sum;
         newE = state[3] + sum;
 
@@ -131,18 +110,7 @@ void SHA256::revert(std::vector<byte_t> &hash) {
     // Revert all bytes
     for (uint8_t i = 0; i < 4; i++) {
         for (uint8_t j = 0; j < 8; j++) {
-            hash[i + (j * 4)] = byte_t((m_state[j] >> (24 - i * 8)) & uint_t(0x000000ff));
+            hash[i + (j * 4)] = byte_t(m_state[j] >> (24 - i * 8));
         }
     }
-}
-
-std::string SHA256::toString(const std::vector<byte_t> &digest) {
-    std::stringstream s;
-    s << std::setfill('0') << std::hex;
-
-    for (uint8_t i = 0; i < 32; i++) {
-        s << std::setw(2) << static_cast<uint32_t>(digest[i].val);
-    }
-
-    return s.str();
 }

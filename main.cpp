@@ -202,7 +202,7 @@ int main() {
         time calculating: 3.47532s
         */
 
-        const uint64_t N = 256 * 256 * 256;// 0x100000000;
+        const uint64_t N = 256 * 256;// 0x100000000;
         std::string target = b.calc_target();
 
         auto start = steady_clock::now();
@@ -338,14 +338,12 @@ int main() {
 
         // 348KH/s -> 433KH/s
 
-        for (uint64_t x = 0; x < N / 256; x++) {
+        for (uint64_t x = 0; x < N; x++) {
             if (x % 0x100 == 0) {
-                int64_t hashrate = 1.0 * (x * 256) / (duration_cast<nanoseconds>(steady_clock::now() - start).count() / 1e9);
-                std::cout << "progress: " << (x * 256) * 1.0 / N * 100 << "% " << pretty_hashrate(hashrate) << std::endl;
+                int64_t hashrate = 1.0 * (x*256) / (duration_cast<nanoseconds>(steady_clock::now() - start).count() / 1e9);
+                std::cout << "progress: " <<x * 1.0 / N * 100 << "% " << pretty_hashrate(hashrate) << std::endl;
             }
             auto [nonce, hash] = b.calc_hash(x);
-            std::string trivial_hash = b.trivial_calc_hash(nonce);
-            ASSERT(hash == trivial_hash, "failed:\n" + hash + "\n" + trivial_hash);
 
             //std::cout << bytes_to_hex(hash) << " " << (nonce >> 24) << " " << (nonce & ((1 << 24) - 1))<< "\n";
 

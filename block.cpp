@@ -143,8 +143,7 @@ void block::build_data() {
 
     merkle_root_hash = coinbase_hash_bin;
     for (auto hash : merkle_branch) {
-        merkle_root_hash =
-            sha256(sha256(merkle_root_hash + hex_to_bytes(hash)));
+        merkle_root_hash = sha256(sha256(merkle_root_hash + hex_to_bytes(hash)));
     }
 
     merkle_root_hash = byte_reverse_in_hex(bytes_to_hex(merkle_root_hash));

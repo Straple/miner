@@ -18,6 +18,8 @@ std::vector<byte_t> build_digest(const std::string &bytes) {
     return calc_sha256(calc_sha256(data));
 }
 
+#include<iostream>
+
 std::pair<uint32_t, std::string> find_best_hash(const std::string &bytes) {
     auto digest = build_digest(bytes);
     std::reverse(digest.begin(), digest.end());
@@ -30,15 +32,18 @@ std::pair<uint32_t, std::string> find_best_hash(const std::string &bytes) {
     };
 
     uint32_t best_x = 0;
-    for (uint32_t x = 0; x < 256; x++) {
+    for (uint32_t x = 0; x < N; x++) {
         if (less_compare(x, best_x)) {
             best_x = x;
         }
     }
 
-    std::string hash;
+    std::cout << digest[0] << '\n';
+    exit(0);
+
+    std::string hash(digest.size(), 0);
     for (uint32_t i = 0; i < digest.size(); i++) {
-        hash += digest[i].dp[best_x];
+        hash[i] = digest[i].dp[best_x];
     }
     return {best_x, hash};
 }
