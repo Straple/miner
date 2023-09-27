@@ -1,157 +1,131 @@
 #pragma once
 
-#include <iostream>
+#include "bitsolver.hpp"
 
-inline constexpr static uint32_t N = 256;
-
-template<typename T>
+template<uint32_t bits>
 struct solver {
-    // X - тот байт, который мы хотим найти
-
-    // является ли он X? или промежуточным значением X
-    // если true, то он нам интересен
-    bool is_X = false;
-
-    // dp[X] = какое значение мы получим, если подставить такое X
-    T dp[N];
-
-    void set_is_X() {
-        is_X = true;
-        for (uint32_t x = 0; x < N; x++) {
-            dp[x] = x;
-        }
-    }
-
-    solver(T val) {
-        for (uint32_t x = 0; x < N; x++) {
-            dp[x] = val;
-        }
-    }
-
-    template<typename R>
-    solver(solver<R> other) : is_X(other.is_X) {
-        for (uint32_t x = 0; x < N; x++) {
-            dp[x] = other.dp[x];
-        }
-    }
+    bitsolver data[bits];
 
     solver() = default;
+
+    solver(uint64_t val) {
+        for (uint32_t bit = 0; bit < bits; bit++, val >>= 1) {
+            data[bit] = bitsolver((val & 1) != 0);
+        }
+    }
+
+    template<uint32_t other_bits>
+    solver(const solver<other_bits> &other) {
+        for (uint32_t bit = 0; bit < std::min(other_bits, bits); bit++) {
+            data[bit] = other[bit];
+        }
+    }
+
+    const bitsolver &operator[](uint32_t index) const {
+        return data[index];
+    }
+
+    bitsolver &operator[](uint32_t index) {
+        return data[index];
+    }
+
+    uint64_t calc(int x) {
+        uint64_t res = 0;
+        for (int bit = 0; bit < bits; bit++) {
+            res |= uint64_t(data[bit].msk[x]) << bit;
+        }
+        return res;
+    }
 };
 
-#include <map>
-
-template<typename T>
-std::ostream &operator<<(std::ostream &output, const solver<T> &s) {
-    output << "solutions: {\n";
-    std::map<T, std::vector<uint32_t>> m;
-    for(uint32_t x = 0; x < N; x++) {
-        m[s.dp[x]].push_back(x);
+template<uint32_t bits>
+std::ostream &operator<<(std::ostream &output, const solver<bits> &s) {
+    std::cout << "solver<" << bits << ">:{\n";
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        output << bit << ": " << s[bit] << ",\n";
     }
-    std::cout << m.size() << "\n";
-    for(auto [val, xs] : m) {
-        std::cout << (uint32_t)val << ": ";
-        for(uint32_t x : xs) {
-            std::cout << x << ", ";
-        }
-        std::cout << "\n";
-    }
-    //for (uint32_t x = 0; x < N; x++) {
-    //    output << "(" << x << "->" << static_cast<uint64_t>(s.dp[x]) << ")\n";
-    //}
-    return output << "}";
+    std::cout << "}\n";
+    return output;
 }
 
-template<typename T>
-solver<T> operator>>(solver<T> s, uint64_t k) {
-    for (uint32_t x = 0; x < N; x++) {
-        s.dp[x] >>= k;
-    }
-    return s;
-}
-
-template<typename T>
-solver<T> operator<<(solver<T> s, uint64_t k) {
-    for (uint32_t x = 0; x < N; x++) {
-        s.dp[x] <<= k;
-    }
-    return s;
-}
-
-template<typename T>
-solver<T> operator~(solver<T> s) {
-    for (uint32_t x = 0; x < N; x++) {
-        s.dp[x] = ~s.dp[x];
-    }
-    return s;
-}
-
-#define ADD_OOP(oop)                                              \
-    template<typename T>                                          \
-    solver<T> operator oop(solver<T> lhs, const solver<T> &rhs) { \
-        lhs.is_X |= rhs.is_X;                                     \
-        for (uint32_t x = 0; x < N; x++) {                        \
-            lhs.dp[x] = lhs.dp[x] oop rhs.dp[x];                  \
-        }                                                         \
-        return lhs;                                               \
-    }
-
-//if (lhs.is_X) {                                         \
-    if (rhs.is_X) {                                       \
-        lhs.val = lhs.val oop rhs.val;                    \
-        for (uint32_t x = 0; x < N; x++) {                \
-            lhs.dp[x] = lhs.dp[x] oop rhs.dp[x];          \
-        }                                                 \
-        return lhs;                                       \
-    } else {                                              \
-        lhs.val = lhs.val oop rhs.val;                    \
-        for (uint32_t x = 0; x < N; x++) {              \
-            lhs.dp[x] = lhs.dp[x] oop rhs.val;            \
-        }                                                 \
-        return lhs;                                       \
-    }                                                     \
-} else if (rhs.is_X) {                                    \
-    return rhs oop lhs;                                   \
-} else {                                                  \
-    lhs.val = lhs.val oop rhs.val;                        \
-    return lhs;                                           \
-}                                                         \
-}
-
-ADD_OOP(+)
-ADD_OOP(-)
-ADD_OOP(*)
-ADD_OOP(&)
-ADD_OOP(^)
-ADD_OOP(|)
-
-template<typename T>
-solver<T> choose(solver<T> e, solver<T> f, solver<T> g) {
-    return (e & f) ^ (~e & g);
-
-    solver<T> res;
-    res.is_X = e.is_X || f.is_X || g.is_X;
-    for (uint32_t x = 0; x < N; x++) {
-        res.dp[x] = (e.dp[x] & f.dp[x]) ^ (~e.dp[x] & g.dp[x]);
+template<uint32_t bits>
+solver<bits> operator<<(solver<bits> s, uint32_t k) {
+    solver<bits> res;
+    for (uint32_t bit = 0; bit + k < bits; bit++) {
+        res[bit + k] = s[bit];
     }
     return res;
 }
 
-template<typename T>
-solver<T> rotr(solver<T> x, uint32_t n) {
-    return (x >> n) | (x << (32 - n));
+template<uint32_t bits>
+solver<bits> operator>>(solver<bits> s, uint32_t k) {
+    solver<bits> res;
+    for (uint32_t bit = k; bit < bits; bit++) {
+        res[bit - k] = s[bit];
+    }
+    return res;
 }
 
-template<typename T>
-solver<T> majority(solver<T> a, solver<T> b, solver<T> c) {
-    return (a & (b | c)) | (b & c);
+template<uint32_t bits>
+solver<bits> operator&(solver<bits> lhs, const solver<bits> &rhs) {
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        lhs[bit] = lhs[bit] & rhs[bit];
+    }
+    return lhs;
 }
 
-template<typename T>
-solver<T> sig0(solver<T> x) {
-    return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3);
+template<uint32_t bits>
+solver<bits> operator|(solver<bits> lhs, const solver<bits> &rhs) {
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        lhs[bit] = lhs[bit] | rhs[bit];
+    }
+    return lhs;
 }
 
-template<typename T>
-solver<T> sig1(solver<T> x) {
-    return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10);
+template<uint32_t bits>
+solver<bits> operator^(solver<bits> lhs, const solver<bits> &rhs) {
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        lhs[bit] = lhs[bit] ^ rhs[bit];
+    }
+    return lhs;
+}
+
+template<uint32_t bits>
+solver<bits> operator~(solver<bits> s) {
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        s[bit] = !s[bit];
+    }
+    return s;
+}
+
+template<uint32_t bits>
+inline bool operator==(const solver<bits> lhs, const solver<bits> rhs) {
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        if(lhs[bit] != rhs[bit]){
+            return false;
+        }
+    }
+    return true;
+}
+
+template<uint32_t bits>
+inline bool operator!=(const solver<bits> lhs, const solver<bits> rhs) {
+    return !(lhs == rhs);
+}
+
+template<uint32_t bits>
+solver<bits> operator+(solver<bits> lhs, const solver<bits> &rhs) {
+    //std::cout << "lhs: " << lhs << "\n";
+    //std::cout << "rhs: " << rhs << "\n";
+    //std::cout << "lhs & rhs: " << (lhs & rhs) << std::endl;
+
+    bool need_add = false;
+    for (uint32_t bit = 0; bit < bits; bit++) {
+        need_add |= (rhs[bit] != bitsolver(false));
+    }
+    if (!need_add) {
+        return lhs;
+    } else {
+        return (lhs ^ rhs) + ((lhs & rhs) << 1);
+    }
 }

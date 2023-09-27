@@ -35,6 +35,31 @@ std::vector<byte_t> SHA256::digest() {
     return hash;
 }
 
+template<uint32_t bits>
+solver<bits> choose(solver<bits> e, solver<bits> f, solver<bits> g) {
+    return (e & f) ^ (~e & g);
+}
+
+template<uint32_t bits>
+solver<bits> rotr(solver<bits> x, uint32_t n) {
+    return (x >> n) | (x << (32 - n));
+}
+
+template<uint32_t bits>
+solver<bits> majority(solver<bits> a, solver<bits> b, solver<bits> c) {
+    return (a & (b | c)) | (b & c);
+}
+
+template<uint32_t bits>
+solver<bits> sig0(solver<bits> x) {
+    return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3);
+}
+
+template<uint32_t bits>
+solver<bits> sig1(solver<bits> x) {
+    return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10);
+}
+
 void SHA256::transform() {
     uint_t maj, xorA, ch, xorE, sum, newA, newE, m[64];
     uint_t state[8];
