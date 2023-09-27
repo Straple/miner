@@ -5,16 +5,16 @@
 #include <vector>
 #include "solver.hpp"
 
-using byte_t = solver<8>;
-using uint_t = solver<32>;
+using byte_t = uint8_t;
+using uint_t = uint32_t;
 
 class SHA256 {
 public:
     SHA256();
 
-    void update(const std::vector<byte_t> &data);
+    void update(const std::string &data);
 
-    std::vector<byte_t> digest();
+    std::string digest();
 
 private:
     byte_t m_data[64];
@@ -39,5 +39,5 @@ private:
 
     void pad();
 
-    void revert(std::vector<byte_t> &hash);
+    void revert(std::string &hash);
 };

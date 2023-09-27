@@ -202,201 +202,30 @@ int main() {
         time calculating: 3.47532s
         */
 
-        const uint64_t N = 256 * 256;// 0x100000000;
+        const uint64_t N = 0x100000000;
         std::string target = b.calc_target();
 
         auto start = steady_clock::now();
 
         std::mt19937 rnd(42);
 
-        // (hash, block)
-        /*std::vector<std::pair<std::string, block>> queue;
-
-        for (int i = 0; i < 10'000; i++) {
-            block x = b;
-            uint32_t extranonce2 = rnd();
-            x.extranonce2 = integer_to_hex(extranonce2, extranonce2_size * 2);
-            x.nonce = rnd();
-
-            x.build_data();
-            queue.emplace_back(x.calc_hash(), x);
-        }
-
-        std::sort(queue.begin(), queue.end());
-
-        int steps = 0;
-
-        std::string best_hash = b.calc_hash();
-        std::cout << "BEST: " << bytes_to_hex(best_hash) << "\n\n";
-
-        auto start = steady_clock::now();
-
-        while (true) {
-            auto [hash, block] = queue[0];
-            if (hash < best_hash) {
-                best_hash = hash;
-                std::cout << "NEW BEST: " << bytes_to_hex(best_hash) << "\n\n";
-            }
-
-            if (steps % 0x000100000 == 0) {
-                int64_t hashrate =
-                    1.0 * steps /
-                    (duration_cast<nanoseconds>(steady_clock::now() - start)
-                         .count() /
-                     1e9);
-                std::cout << "progress: " << steps * 1.0 / N * 100 << "% "
-                          << pretty_hashrate(hashrate) << std::endl;
-            }
-
-            if (hash < target) {
-                std::cout << "COMPLETED!!!: " << block.nonce << ": "
-                          << bytes_to_hex(b.calc_hash()) << std::endl;
-                submit(block.nonce, block.extranonce2);
-            }
-
-            // 8 нулей в хеше нужно было перебрать 70% из 2^32 значений
-            if (hash[0] == 0 && hash[1] == 0 && hash[2] == 0 && hash[3] == 0) {
-                std::cout << "FIND NICE: " << block.nonce << ": "
-                          << bytes_to_hex(b.calc_hash()) << std::endl;
-                submit(block.nonce, block.extranonce2);
-            }
-
-            std::vector<std::pair<std::string, ::block>> new_que;
-            for (auto [hash, block] : queue) {
-                for (int step = 0; step < 100; step++) {
-                    uint32_t x = rnd();
-                    block.nonce ^= x;
-                    std::string hash = block.calc_hash();
-
-                    steps++;
-                    new_que.emplace_back(hash, block);
-
-                    block.nonce ^= x;
-                }
-            }
-            std::sort(new_que.begin(), new_que.end());
-
-            while (new_que.size() > 1000) {
-                new_que.pop_back();
-            }
-
-            queue = std::move(new_que);
-        }*/
-
-        /*while (true) {
-            auto [hash, block] = *queue.begin();
-            queue.erase(queue.begin());
-            // std::cout << bytes_to_hex(hash) << "\n\n";
-
-            if (hash < best_hash) {
-                best_hash = hash;
-                std::cout << "NEW BEST: " << bytes_to_hex(best_hash) << "\n\n";
-            }
-
-            if (steps % 0x000100000 == 0) {
-                int64_t hashrate =
-                    1.0 * steps /
-                    (duration_cast<nanoseconds>(steady_clock::now() - start)
-                         .count() /
-                     1e9);
-                std::cout << "progress: " << steps * 1.0 / N * 100 << "% "
-                          << pretty_hashrate(hashrate) << std::endl;
-            }
-
-            if (hash < target) {
-                std::cout << "COMPLETED!!!: " << block.nonce << ": "
-                          << bytes_to_hex(b.calc_hash()) << std::endl;
-                submit(block.nonce, block.extranonce2);
-            }
-
-            // 8 нулей в хеше нужно было перебрать 70% из 2^32 значений
-            if (hash[0] == 0 && hash[1] == 0 && hash[2] == 0 && hash[3] == 0) {
-                std::cout << "FIND NICE: " << block.nonce << ": "
-                          << bytes_to_hex(b.calc_hash()) << std::endl;
-                submit(block.nonce, block.extranonce2);
-            }
-
-            for (int step = 0; step < 10; step++) {
-                uint32_t x = rnd();
-                block.nonce ^= x;
-                std::string hash = block.calc_hash();
-
-                steps++;
-                queue.insert(std::make_pair(hash, block));
-
-                block.nonce ^= x;
-            }
-
-            while (queue.size() > 10'000) {
-                queue.erase(--queue.end());
-            }
-        }*/
-
         uint32_t extranonce2 = rnd();
         b.extranonce2 = integer_to_hex(extranonce2, extranonce2_size * 2);
         b.build_data();
 
-        // 348KH/s -> 433KH/s
-
-        for (uint64_t x = 0; x < N; x++) {
-            if (x % 0x100 == 0) {
-                int64_t hashrate = 1.0 * (x * 256) / (duration_cast<nanoseconds>(steady_clock::now() - start).count() / 1e9);
-                std::cout << "progress: " << x * 1.0 / N * 100 << "% " << pretty_hashrate(hashrate) << std::endl;
-            }
-            auto [nonce, hash] = b.calc_hash(x);
-
-            //std::cout << bytes_to_hex(hash) << " " << (nonce >> 24) << " " << (nonce & ((1 << 24) - 1))<< "\n";
-
-            // validate find_best_hash
-            /*{
-                uint32_t best_byte = 0;
-                for (uint32_t byte = 0; byte < 256; byte++) {
-                    if (b.trivial_calc_hash(x | (byte << 24)) <
-                        b.trivial_calc_hash(x | (best_byte << 24))) {
-                        best_byte = byte;
-                    }
-                }
-                //std::cout << nonce << ' ' << (x | (best_byte << 24)) << '\n';
-                //std::cout << (nonce >> 24) << " " << best_byte << '\n';
-                //std::cout << bytes_to_hex(hash) << "\n"
-                //          << bytes_to_hex(b.trivial_calc_hash(x | (best_byte << 24)))
-                //          << "\n";
-                ASSERT(
-                        hash == b.trivial_calc_hash(x | (best_byte << 24)),
-                        "failed find best");
-            }*/
-
-            // std::cout << bytes_to_hex(b.calc_hash(nonce)) << '\n' <<
-            // bytes_to_hex(b.trivial_calc_hash(nonce)) << '\n';
-            // std::cout << bytes_to_hex(b.calc_hash(nonce)) << '\n';
-            // std::cout << bytes_to_hex(target) << '\n';
-            if (hash < target) {
-                std::cout << "COMPLETED!!!: " << nonce << ": "
-                          << bytes_to_hex(hash) << std::endl;
-                submit(nonce, b.extranonce2);
-            }
-
-            // 8 нулей в хеше нужно было перебрать 70% из 2^32 значений
-            if (hash[0] == 0 && hash[1] == 0 && hash[2] == 0 && hash[3] == 0) {
-                std::cout << "FIND NICE: " << nonce << ": "
-                          << bytes_to_hex(hash) << std::endl;
-                submit(nonce, b.extranonce2);
-            }
-        }
-
-        /*for (uint64_t nonce = 0; nonce < N; nonce++) {
-            if (nonce % 0x001000000 == 0) {
+        for (uint64_t nonce = 0; nonce < N; nonce++) {
+            if (nonce % 0x000010000 == 0) {
                 int64_t hashrate =
-                    1.0 * nonce /
-                    (duration_cast<nanoseconds>(steady_clock::now() - start)
-                         .count() /
-                     1e9);
+                        1.0 * nonce /
+                        (duration_cast<nanoseconds>(steady_clock::now() - start)
+                                 .count() /
+                         1e9);
                 std::cout << "progress: " << nonce * 1.0 / N * 100 << "% "
                           << pretty_hashrate(hashrate) << std::endl;
             }
-            b.nonce = nonce;
-            std::string hash = b.calc_hash();
-            // ASSERT(b.calc_hash(nonce) == b.trivial_calc_hash(nonce),
+            //b.nonce = nonce;
+            std::string hash = b.calc_hash(nonce);
+            //ASSERT(b.calc_hash(nonce) == b.trivial_calc_hash(nonce),
             //"failed");
             // std::cout << bytes_to_hex(b.calc_hash(nonce)) << '\n' <<
             // bytes_to_hex(b.trivial_calc_hash(nonce)) << '\n';
@@ -414,7 +243,7 @@ int main() {
                           << bytes_to_hex(hash) << std::endl;
                 submit(nonce, std::string(extranonce2_size * 2, '0'));
             }
-        }*/
+        }
 
         auto stop = steady_clock::now();
         auto duration = stop - start;

@@ -15,7 +15,7 @@ SHA256::SHA256() : m_blocklen(0), m_bitlen(0) {
     m_state[7] = 0x5be0cd19;
 }
 
-void SHA256::update(const std::vector<byte_t> &data) {
+void SHA256::update(const std::string &data) {
     for (size_t i = 0; i < data.size(); i++) {
         m_data[m_blocklen++] = data[i];
         if (m_blocklen == 64) {
@@ -28,35 +28,31 @@ void SHA256::update(const std::vector<byte_t> &data) {
     }
 }
 
-std::vector<byte_t> SHA256::digest() {
-    std::vector<byte_t> hash(32);
+std::string SHA256::digest() {
+    std::string hash(32, 0);
     pad();
     revert(hash);
     return hash;
 }
 
-template<uint32_t bits>
-solver<bits> choose(solver<bits> e, solver<bits> f, solver<bits> g) {
+uint32_t choose(uint32_t e, uint32_t f, uint32_t g) {
     return (e & f) ^ (~e & g);
 }
 
-template<uint32_t bits>
-solver<bits> rotr(solver<bits> x, uint32_t n) {
+
+uint32_t rotr(uint32_t x, uint32_t n) {
     return (x >> n) | (x << (32 - n));
 }
 
-template<uint32_t bits>
-solver<bits> majority(solver<bits> a, solver<bits> b, solver<bits> c) {
+uint32_t majority(uint32_t a, uint32_t b, uint32_t c) {
     return (a & (b | c)) | (b & c);
 }
 
-template<uint32_t bits>
-solver<bits> sig0(solver<bits> x) {
+uint32_t sig0(uint32_t x) {
     return rotr(x, 7) ^ rotr(x, 18) ^ (x >> 3);
 }
 
-template<uint32_t bits>
-solver<bits> sig1(solver<bits> x) {
+uint32_t sig1(uint32_t x) {
     return rotr(x, 17) ^ rotr(x, 19) ^ (x >> 10);
 }
 
@@ -130,7 +126,7 @@ void SHA256::pad() {
     transform();
 }
 
-void SHA256::revert(std::vector<byte_t> &hash) {
+void SHA256::revert(std::string &hash) {
     // SHA uses big endian byte ordering
     // Revert all bytes
     for (uint8_t i = 0; i < 4; i++) {

@@ -2,7 +2,7 @@
 #include "sha256.hpp"
 #include <algorithm>
 
-std::vector<byte_t> calc_sha256(const std::vector<byte_t> &data) {
+/*std::vector<byte_t> calc_sha256(const std::vector<byte_t> &data) {
     SHA256 sha;
     sha.update(data);
     auto digest = sha.digest();
@@ -48,4 +48,4 @@ std::pair<uint32_t, std::string> find_best_hash(const std::string &bytes) {
         hash[i] = digest[i].calc(best_x);
     }
     return {best_x, hash};
-}
+}*/

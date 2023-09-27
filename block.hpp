@@ -25,7 +25,7 @@ struct block {
 
     std::string trivial_calc_hash(uint32_t nonce);
 
-    std::pair<uint32_t, std::string> calc_hash(uint32_t x);
+    std::string calc_hash(uint32_t x);
 
     bool operator < (const block& rhs) const{
         return save_bytes_data < rhs.save_bytes_data;
