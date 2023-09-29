@@ -1,10 +1,8 @@
 #pragma once
 
-#include "bitsolver.hpp"
-
-template<uint32_t bits>
+template<typename T>
 struct solver {
-    bitsolver data[bits];
+
 
     solver() = default;
 
