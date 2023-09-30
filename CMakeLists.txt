@@ -18,7 +18,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 #ENDIF()
 
 add_executable(miner
-        main.cpp openssl_sha256.cpp bits_manipulation.cpp block.cpp sha256_solver/sha256.cpp sha256_solver/sha256_solver.cpp)
+        main.cpp sha256/openssl_sha256.cpp bits_manipulation.cpp block.cpp utils.cpp pool_client.cpp miner.cpp)
 
 target_link_libraries(miner OpenSSL::SSL)
 

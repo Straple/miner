@@ -1,7 +1,6 @@
 #pragma once
 
 #include <string>
-#include "assert.hpp"
 
 std::string byte_to_hex(unsigned char byte);
 

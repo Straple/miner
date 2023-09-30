@@ -1,4 +1,5 @@
 #include "bits_manipulation.hpp"
+#include "assert.hpp"
 #include <algorithm>
 #include <iomanip>
 #include <sstream>
@@ -46,7 +47,7 @@ uint64_t hex_to_integer(char hex_code) {
 
 uint64_t hex_to_integer(std::string hex_str) {
     uint64_t result = 0;
-    for (char c : hex_str) {
+    for (char c: hex_str) {
         result *= 16;
         result += hex_to_integer(c);
     }
@@ -71,7 +72,7 @@ std::string hex_to_bytes(const std::string &hex_str) {
 std::string bytes_to_hex(const std::string &bytes) {
     std::string hex;
     hex.reserve(bytes.size() * 2);
-    for (unsigned char byte : bytes) {
+    for (unsigned char byte: bytes) {
         hex += byte_to_hex(byte >> 4);
         hex += byte_to_hex(byte & 0xf);
     }
@@ -94,7 +95,7 @@ std::string hex_multiply(const std::string &lhs, const std::string &rhs) {
         data.pop_back();
     }
     std::string ans;
-    for (auto x : data) {
+    for (auto x: data) {
         ans += byte_to_hex(x);
     }
     return ans;

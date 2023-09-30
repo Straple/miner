@@ -1,7 +1,6 @@
 #include "block.hpp"
 #include "bits_manipulation.hpp"
-#include "openssl_sha256.hpp"
-#include "sha256_solver/sha256_solver.hpp"
+#include "sha256/openssl_sha256.hpp"
 #include <algorithm>
 
 [[nodiscard]] std::string block::calc_target() const {
@@ -24,48 +23,12 @@
     return hex_to_bytes(target);
 }
 
-#include "sha256_solver/sha256.hpp"
-
-std::string calc_sha256(const std::string &data) {
-    SHA256 sha;
-    sha.update(data);
-    auto digest = sha.digest();
-    return digest;
-}
-
 std::string block::calc_hash(uint32_t x) {
-    /*ASSERT((x >> 24) == 0, "bad x");
-
+    nonce = x;
     for (int i = 0; i < 4; i++) {
         save_bytes_data[save_bytes_data.size() - 4 + i] = (x >> (8 * i)) & 0xff;
     }
-
-    auto [best_x, hash] = find_best_hash(save_bytes_data);
-    nonce = x | (best_x << 24);
-
-    ASSERT(trivial_calc_hash(nonce) == hash, "failed");
-
-    return {nonce, hash};*/
-
-
-    // 1MH/s
-    for (int i = 0; i < 4; i++) {
-        save_bytes_data[save_bytes_data.size() - 4 + i] = (x >> (8 * i)) & 0xff;
-    }
-
-    return reverse_str(calc_sha256(calc_sha256(save_bytes_data)));
-
-    // 1MH/s
-    /*for (int i = 0; i < 4; i++) {
-        save_bytes_data[save_bytes_data.size() - 4 + i] = (x >> (8 * i)) & 0xff;
-    }
-    return reverse_str(calc_sha256(calc_sha256(save_bytes_data)));*/
-
-    // 4MH/s
-    /*for (int i = 0; i < 4; i++) {
-        save_bytes_data[save_bytes_data.size() - 4 + i] = (x >> (8 * i)) & 0xff;
-    }
-    return reverse_str(sha256(sha256(save_bytes_data)));*/
+    return reverse_str(sha256(sha256(save_bytes_data)));
 }
 
 // 51KH/s
