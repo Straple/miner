@@ -1,6 +1,8 @@
 #include "block.hpp"
+#include "assert.hpp"
 #include "bits_manipulation.hpp"
 #include "sha256/openssl_sha256.hpp"
+#include "utils.hpp"
 #include <algorithm>
 
 [[nodiscard]] std::string block::calc_target() const {
@@ -119,4 +121,9 @@ void block::build_data() {
         byte_reverse_in_hex(integer_to_hex(difficulty_target, 8)) +
         std::string(8, '0')  // reserved by nonce
     );*/
+}
+
+void block::build_extranonce2() {
+    extranonce2 = integer_to_hex(rnd(), extranonce2_size * 2);
+    build_data();
 }

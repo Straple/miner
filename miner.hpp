@@ -11,31 +11,27 @@ class Miner {
     std::thread thread;
     std::mutex mutex;
 
-    uint32_t id; // id майнера
+    uint32_t id = -1;// id майнера
 
-    block b; // текущий блок, который мы добываем
+    block b;// текущий блок, который мы добываем
 
     std::string best_block_hash = "z";
     block best_block;
-    bool best_block_is_submited = false;
-
-    bool is_new_block = false;
-    block new_block;
-
-    // берет новый блок из best_block, если такой есть
-    void keep_new_block();
-
-    // best_block = b
-    // best_block_hash = hash
-    void set_best_block(const std::string &hash);
 
 public:
+    Miner() = default;
 
-    // ставит новый блок
-    void set_new_block(block new_block_);
+    void Init(uint32_t ID, block new_block) {
+        id = ID;
+        b = std::move(new_block);
+        thread = std::thread(&Miner::run, this);
+    }
+
+    // ставит новый блок на добычу
+    void set_new_block(block new_block);
 
     // дает лучший блок
     block get_best_block();
 
-    void run();
+    [[noreturn]] void run();
 };

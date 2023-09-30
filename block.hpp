@@ -28,4 +28,6 @@ struct block {
     std::string trivial_calc_hash(uint32_t nonce);
 
     std::string calc_hash(uint32_t x);
+
+    void build_extranonce2();
 };

@@ -135,10 +135,7 @@ block PoolClient::get_new_block(bool &new_miner_task) {
     b.merkle_branch = merkle_branch;
     b.job_id = job_id;
 
-    // choose extranonce2
-    uint32_t extranonce2 = rnd();
-    b.extranonce2 = integer_to_hex(extranonce2, extranonce2_size * 2);
-    b.build_data();
+    b.build_extranonce2();
 
     std::cout << "OK\n\n";
     std::cout.flush();
