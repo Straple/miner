@@ -30,7 +30,8 @@ PoolClient::PoolClient()
           std::cout << "OK\n\n";
           std::cout.flush();
           return socket;
-      }()) {
+      }()),
+      logger("pool_client.txt") {
 
     subscribe();
 
@@ -38,7 +39,7 @@ PoolClient::PoolClient()
 }
 
 void PoolClient::subscribe() {
-    std::cout << "SUBSCRIBE..." << std::endl;
+    logger.print("SUBSCRIBE...");
 
     sockstream << "{\"id\": 1, \"method\": \"mining.subscribe\", \"params\": []}\n";
 
@@ -49,21 +50,19 @@ void PoolClient::subscribe() {
             break;
         }
     }
-    std::cout << "SUBSCRIBE RESPONSE: >" << response << "<\n";
-    std::cout.flush();
+    logger.print("SUBSCRIBE RESPONSE: >" + response + "<");
 
     json data = json::parse(response);
 
     extranonce1 = data["result"][1];
     extranonce2_size = data["result"][2];
 
-    std::cout << "extranonce1: " << extranonce1 << "\n";
-    std::cout << "extranonce2_size: " << extranonce2_size << "\n\n";
-    std::cout.flush();
+    logger.print("extranonce1: " + extranonce1);
+    logger.print("extranonce2_size: " + std::to_string(extranonce2_size));
 }
 
 void PoolClient::authorize() {
-    std::cout << "AUTHORIZATION..." << std::endl;
+    logger.print("AUTHORIZATION...");
 
     sockstream << "{\"id\": 2, \"method\": \"mining.authorize\", \"params\": [\"" + worker + "\", \"123456\"]}\n";
 
@@ -75,15 +74,12 @@ void PoolClient::authorize() {
         }
     }
 
-    std::cout << "AUTHORIZE RESPONSE: >" << response << "<\n";
-
+    logger.print("AUTHORIZE RESPONSE: >" + response + "<");
     ASSERT(json::parse(response)["result"] == true, "bad result");
-    std::cout << "OK\n\n";
-    std::cout.flush();
 }
 
 block PoolClient::get_new_block(bool &new_miner_task) {
-    std::cout << "GET_NEW_BLOCK..." << std::endl;
+    logger.print("GET_NEW_BLOCK...");
 
     std::string previous_block_hash, coinb1, coinb2, job_id;
     uint32_t nbits, version, timestamp;
@@ -137,14 +133,15 @@ block PoolClient::get_new_block(bool &new_miner_task) {
 
     b.build_extranonce2();
 
-    std::cout << "OK\n\n";
-    std::cout.flush();
+    if(new_miner_task){
+        logger.print("DETECTED NEW BLOCK");
+    }
 
     return b;
 }
 
 void PoolClient::submit(const block &b) {
-    std::cout << "SUBMIT..." << std::endl;
+    logger.print("SUBMIT...");
 
     sockstream << "{\"params\": [\"" + worker + "\", \"" + b.job_id +
                           "\", \"" + b.extranonce2 + "\", \"" +
@@ -167,7 +164,9 @@ void PoolClient::submit(const block &b) {
         }
     }
 
-    std::cout << "SUBMIT RESPONSE: >" << response << "<\n";
-    std::cout << "OK?\n"
-              << std::endl;
+    logger.print("SUBMIT RESPONSE: >" + nlohmann::to_string(response) + "<");
+}
+
+bool PoolClient::reading_is_available() {
+    return sockstream.rdbuf()->available() != 0;
 }

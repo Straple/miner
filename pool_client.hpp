@@ -5,6 +5,7 @@
 
 #include "block.hpp"
 #include <string>
+#include "logger.hpp"
 
 #include <boost/asio.hpp>
 using namespace boost::asio;
@@ -17,6 +18,8 @@ class PoolClient {
 
     std::string extranonce1;
     int extranonce2_size;
+
+    Logger logger;
 
     // подписывается
     void subscribe();
@@ -38,4 +41,7 @@ public:
 
     // отправляет этот блок пулу
     void submit(const block &b);
+
+    // вернет true, если можно что-то считать у пула
+    bool reading_is_available();
 };
