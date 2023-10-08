@@ -12,7 +12,8 @@ class Logger {
     std::ofstream output;
 
 public:
-    Logger(std::string filename) : output(filename) {
+    Logger() = default;
+    Logger(const std::string &filename) : output(filename) {
     }
     void print(std::string message);
 };

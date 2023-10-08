@@ -7,13 +7,6 @@
 
 using namespace std::chrono;
 
-namespace {
-    int COUNTER = 0;
-}
-
-Miner::Miner() : logger("uninitialized Miner" + std::to_string(COUNTER++)) {
-}
-
 void Miner::Init(uint32_t ID, block new_block) {
     id = ID;
     b = std::move(new_block);

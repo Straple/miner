@@ -61,7 +61,6 @@ class Miner {
     Logger logger;
 
 public:
-    Miner();
 
     void Init(uint32_t ID, block new_block);
 
