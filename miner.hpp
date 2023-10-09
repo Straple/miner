@@ -70,7 +70,7 @@ public:
     // дает лучший блок
     block get_best_block();
 
-    bool available_good();
+    bool available_good() const;
 
     [[noreturn]] void run();
 };

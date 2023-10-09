@@ -1,12 +1,8 @@
 #include <iostream>
-#include <string>
 #include <vector>
 
-//#include "bits_manipulation.hpp"
 #include "miner.hpp"
 #include "pool_client.hpp"
-//#include "utils.hpp"
-#include "logger.hpp"
 
 int main() {
     // connect to pool

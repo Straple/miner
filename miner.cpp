@@ -47,7 +47,7 @@ block Miner::get_best_block() {
     return copy_best_block;
 }
 
-bool Miner::available_good() {
+bool Miner::available_good() const {
     return is_good;
 }
 
