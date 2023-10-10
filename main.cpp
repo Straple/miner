@@ -8,7 +8,7 @@ int main() {
     // connect to pool
     PoolClient pool_client;
 
-    const uint32_t MINERS = 2;
+    const uint32_t MINERS = 1;
     std::vector<Miner> miners(MINERS);
     std::cout << "START MINERS...\n";
     {

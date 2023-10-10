@@ -7,7 +7,9 @@
 
 #include "block.hpp"
 #include "logger.hpp"
+#include "statistic.hpp"
 
+// синхронизация майнера и главного потока
 /*
 // поток B работает при mutex_t::UNLOCKED
 // это значит, что никто другой его данные не трогает
@@ -40,6 +42,16 @@ if (mutex == mutex_t::WAITED_FOR_LOCK) {
 }
 */
 
+#include "utils.hpp"
+
+inline std::vector<uint32_t> default_data(){
+    std::vector<uint32_t> data(100);
+    for(uint32_t index = 0; index < data.size(); index++){
+        data[index] = rnd();
+    }
+    return data;
+}
+
 class Miner {
     std::thread thread;
 
@@ -52,6 +64,10 @@ class Miner {
 
     uint32_t id = -1;// id майнера
 
+    // эту штуку мы и будем обучать
+    // это возможные шаги, которые мы делаем в dig() при град спуске
+    std::vector<uint32_t> data = default_data();
+
     block b;// текущий блок, который мы добываем
 
     std::string best_block_hash = "z";
@@ -60,8 +76,11 @@ class Miner {
 
     Logger logger;
 
-public:
+    Statistic dig();
 
+    void simulate_lock();
+
+public:
     void Init(uint32_t ID, block new_block);
 
     // ставит новый блок на добычу
