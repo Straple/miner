@@ -1,5 +1,6 @@
 
 #include "logger.hpp"
+#include <iomanip>
 
 std::string get_now_datetime() {
     uint64_t nanosecond = std::chrono::duration_cast<std::chrono::nanoseconds>(
@@ -8,14 +9,17 @@ std::string get_now_datetime() {
                           1'000'000'000;
     std::time_t t = std::time(0);
     std::tm *now = std::localtime(&t);
+
     std::stringstream ss;
+    ss.fill('0');
+
     ss << (now->tm_year + 1900) << '-'
-       << now->tm_mon + 1 << '-'
-       << now->tm_mday << '.' << now->tm_hour << ':' << now->tm_min << ':' << now->tm_sec << "::";
-    for (uint64_t x = 1'000'000'000; x > nanosecond; x /= 10) {
-        ss << '0';
-    }
-    ss << nanosecond;
+       << std::setw(2) << now->tm_mon + 1 << '-'
+       << std::setw(2) << now->tm_mday << '.'
+       << std::setw(2) << now->tm_hour << ':'
+       << std::setw(2) << now->tm_min << ':'
+       << std::setw(2) << now->tm_sec << "::"
+       << std::setw(9) << nanosecond;
     return ss.str();
 }
 

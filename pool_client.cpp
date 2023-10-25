@@ -8,12 +8,7 @@
 #include "nlohmann/json.hpp"
 using json = nlohmann::json;
 
-// solo.ckpool.org
-// bs.poolbinance.com
-// pool.veriblock.cc
-const static std::string ip_address = "bch.poolbinance.com";
-const static std::string port = "1800";              //"3333";
-const static std::string worker = "StrapleMiner.001";//"16p9y6EstGYcnofGNvUJMEGKiAWhAr1uR8";
+#include "constants.hpp"
 
 PoolClient::PoolClient()
     : sockstream([&]() {
@@ -21,7 +16,7 @@ PoolClient::PoolClient()
           tcp::socket socket(io_context);
 
           tcp::resolver resolver(io_context);
-          auto endpoints = resolver.resolve(ip_address, port);
+          auto endpoints = resolver.resolve(IP_ADDRESS, PORT);
 
           boost::system::error_code error_code;
           boost::asio::connect(socket, endpoints, error_code);
@@ -64,7 +59,7 @@ void PoolClient::subscribe() {
 void PoolClient::authorize() {
     logger.print("AUTHORIZATION...");
 
-    sockstream << "{\"id\": 2, \"method\": \"mining.authorize\", \"params\": [\"" + worker + "\", \"123456\"]}\n";
+    sockstream << "{\"id\": 2, \"method\": \"mining.authorize\", \"params\": [\"" + WORKER_NAME + "\", \"123456\"]}\n";
 
     std::string response;
     while (true) {
@@ -133,7 +128,7 @@ block PoolClient::get_new_block(bool &new_miner_task) {
 
     b.build_extranonce2();
 
-    if(new_miner_task){
+    if (new_miner_task) {
         logger.print("DETECTED NEW BLOCK");
     }
 
@@ -143,7 +138,7 @@ block PoolClient::get_new_block(bool &new_miner_task) {
 void PoolClient::submit(const block &b) {
     logger.print("SUBMIT...");
 
-    sockstream << "{\"params\": [\"" + worker + "\", \"" + b.job_id +
+    sockstream << "{\"params\": [\"" + WORKER_NAME + "\", \"" + b.job_id +
                           "\", \"" + b.extranonce2 + "\", \"" +
                           integer_to_hex(b.timestamp, 8) + "\", \"" +
                           integer_to_hex(b.nonce, 8) +
