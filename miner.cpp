@@ -79,7 +79,7 @@ int64_t Miner::hashrate() const {
         if (hash < best_block_hash) {
             best_block_hash = hash;
             best_block = b;
-            is_good = hash[0] == 0 && hash[1] == 0 && hash[2] == 0;// && hash[3] == 0 && hash[4] == 0;
+            is_good = hash[0] == 0 && hash[1] == 0 && hash[2] == 0 && hash[3] == 0;// && hash[4] == 0;
             logger.print("NEW BEST BLOCK: " + bytes_to_hex(best_block_hash));
         }
 

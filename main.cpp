@@ -10,7 +10,7 @@ using namespace std::chrono;
 #include "pool_client.hpp"
 
 int main(int argc, char **argv) {
-    int MINERS = 2;
+    int MINERS = 4;
     if (argc == 2) {
         MINERS = std::atoi(argv[1]);
         std::cout << "Miners count: " << MINERS << '\n';
