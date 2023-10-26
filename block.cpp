@@ -5,17 +5,17 @@
 #include "utils.hpp"
 #include <algorithm>
 
-[[nodiscard]] std::string block::calc_target() const {
+[[nodiscard]] fast_string block::calc_target() const {
     // for more details and example see
     // https://en.bitcoin.it/wiki/Difficulty
     const uint64_t exponent = nbits >> 24;
     const uint64_t mantissa = nbits & 0xffffff;
 
-    std::string x = "1";
+    fast_string x = "1";
     for (int i = 0; i < 8 * (exponent - 3); i++) {
         x = hex_multiply(x, "2");
     }
-    std::string target =
+    fast_string target =
             hex_multiply(reverse_str(integer_to_hex(mantissa, 6)), x);
 
     while (target.size() < 64) {
@@ -25,23 +25,23 @@
     return hex_to_bytes(target);
 }
 
-std::string block::calc_hash(uint32_t x) {
+fast_string block::calc_hash(uint32_t x) {
     nonce = x;
     for (int i = 0; i < 4; i++) {
-        save_bytes_data[save_bytes_data.size() - 4 + i] = (x >> (8 * i)) & 0xff;
+        save_bytes_data[80 - 4 + i] = (x >> (8 * i)) & 0xff;
     }
     return reverse_str(sha256(sha256(save_bytes_data)));
 }
 
 // 51KH/s
-std::string block::trivial_calc_hash(uint32_t nonce) {
+fast_string block::trivial_calc_hash(uint32_t nonce) {
     // std::string extranonce2(extranonce2_size * 2, '0');  // random fill
 
-    std::string coinbase = coinb1 + extranonce1 + extranonce2 + coinb2;
+    fast_string coinbase = coinb1 + extranonce1 + extranonce2 + coinb2;
 
     // std::cout << "coinbase: " << coinbase << "\n\n";
 
-    std::string coinbase_hash_bin = sha256(sha256(hex_to_bytes(coinbase)));
+    fast_string coinbase_hash_bin = sha256(sha256(hex_to_bytes(coinbase)));
 
     merkle_root_hash = coinbase_hash_bin;
     for (auto hash: merkle_branch) {
@@ -62,7 +62,7 @@ std::string block::trivial_calc_hash(uint32_t nonce) {
     nbits = 0x19015f53;*/
     // ===============
 
-    std::string block_header =
+    fast_string block_header =
             byte_reverse_in_hex(integer_to_hex(version, 8)) + previous_block_hash +
             merkle_root_hash + byte_reverse_in_hex(integer_to_hex(timestamp, 8)) +
             byte_reverse_in_hex(integer_to_hex(nbits, 8)) +
@@ -78,11 +78,11 @@ std::string block::trivial_calc_hash(uint32_t nonce) {
 void block::build_data() {
     // std::string extranonce2(extranonce2_size * 2, '0');  // random fill
 
-    std::string coinbase = coinb1 + extranonce1 + extranonce2 + coinb2;
+    fast_string coinbase = coinb1 + extranonce1 + extranonce2 + coinb2;
 
     // std::cout << "coinbase: " << coinbase << "\n\n";
 
-    std::string coinbase_hash_bin = sha256(sha256(hex_to_bytes(coinbase)));
+    fast_string coinbase_hash_bin = sha256(sha256(hex_to_bytes(coinbase)));
 
     merkle_root_hash = coinbase_hash_bin;
     for (auto hash: merkle_branch) {
@@ -102,7 +102,7 @@ void block::build_data() {
     nbits = 0x19015f53;*/
     // ===============
 
-    std::string block_header =
+    fast_string block_header =
             byte_reverse_in_hex(integer_to_hex(version, 8)) + previous_block_hash +
             merkle_root_hash + byte_reverse_in_hex(integer_to_hex(timestamp, 8)) +
             byte_reverse_in_hex(integer_to_hex(nbits, 8)) +

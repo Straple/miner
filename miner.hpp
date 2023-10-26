@@ -43,50 +43,38 @@ if (mutex == mutex_t::WAITED_FOR_LOCK) {
 
 #include "utils.hpp"
 
-inline std::vector<uint32_t> default_data() {
-    std::vector<uint32_t> data(100);
-    for (uint32_t index = 0; index < data.size(); index++) {
-        data[index] = rnd();
-    }
-    return data;
-}
-
-class Miner {
+struct Miner {
     std::thread thread;
-
-    enum class mutex_t {
-        LOCKED,
-        WAITED_FOR_LOCK,
-        UNLOCKED,
-    };
-    std::atomic<mutex_t> mutex = mutex_t::LOCKED;
 
     uint32_t id = -1;// id майнера
 
-    block b;// текущий блок, который мы добываем
+    lite_block current_block;// текущий блок, который мы добываем
 
     std::string best_block_hash = "z";
-    block best_block;
+    uint32_t best_nonce;
     bool is_good = false;
 
     Logger logger;
 
-    int64_t hashrate_snapshot = 0;
+    int64_t hash_calculated_count = 0;
 
-    void simulate_lock();
+    double work_time = 0;
+
+    // закончена ли работа
+    bool done = false;
 
 public:
-    void Init(uint32_t ID, block new_block);
+    void init(uint32_t ID, lite_block new_block, uint32_t mining_round, std::vector<std::atomic<bool>> &visited);
 
-    // ставит новый блок на добычу
-    void set_new_block(block new_block);
-
-    // дает лучший блок
-    block get_best_block();
+    uint32_t get_best_nonce();
 
     bool available_good() const;
 
     int64_t hashrate() const;
 
-    [[noreturn]] void run();
+    bool is_done() const;
+
+    void join();
+
+    void run(std::vector<std::atomic<bool>> &visited);
 };

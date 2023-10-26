@@ -8,96 +8,69 @@
 
 using namespace std::chrono;
 
-void Miner::Init(uint32_t ID, block new_block) {
+void Miner::init(uint32_t ID, lite_block new_block, uint32_t mining_round, std::vector<std::atomic<bool>> &visited) {
     id = ID;
-    b = std::move(new_block);
-    b.build_extranonce2();
-    logger = "worker" + std::to_string(ID) + ".txt";
-    thread = std::thread(&Miner::run, this);
+    current_block = std::move(new_block);
+    logger = "worker" + std::to_string(mining_round) + "_" + std::to_string(ID) + "_" + ".txt";
+    thread = std::thread(&Miner::run, this, std::ref(visited));
 }
 
-void Miner::set_new_block(block new_block) {
-    auto time_start = steady_clock::now();
-
-    mutex = mutex_t::WAITED_FOR_LOCK;
-    while (mutex != mutex_t::LOCKED) {}
-
-    auto time_stop = steady_clock::now();
-    auto duration = time_stop - time_start;
-    logger.print("SET NEW BLOCK, waited time: " + std::to_string(duration_cast<nanoseconds>(duration).count() / 1e9) + "s");
-    b = std::move(new_block);
-    b.build_extranonce2();
-
-    mutex = mutex_t::UNLOCKED;
-}
-
-block Miner::get_best_block() {
-    auto time_start = steady_clock::now();
-
-    mutex = mutex_t::WAITED_FOR_LOCK;
-    while (mutex == mutex_t::WAITED_FOR_LOCK) {}
-
-    auto time_stop = steady_clock::now();
-    auto duration = time_stop - time_start;
-    logger.print("GET BEST BLOCK, waited time: " + std::to_string(duration_cast<nanoseconds>(duration).count() / 1e9) + "s");
-
-    block copy_best_block = best_block;
-    is_good = false;// теперь нам незачем этот гуд
-
-    mutex = mutex_t::UNLOCKED;
-    return copy_best_block;
+uint32_t Miner::get_best_nonce() {
+    // TODO: WARGNING
+    // вообще тут так делать не очень, но да ладно
+    // потому что майнер в это время может найти блок и сказать is_good
+    is_good = false;
+    return best_nonce;
 }
 
 bool Miner::available_good() const {
     return is_good;
 }
 
-void Miner::simulate_lock() {
-    if (mutex == mutex_t::WAITED_FOR_LOCK) {
-        mutex = mutex_t::LOCKED;
-        while (mutex == mutex_t::LOCKED) {}
-    }
-}
-
 int64_t Miner::hashrate() const {
-    return hashrate_snapshot;
+    return hash_calculated_count / work_time;
 }
 
-[[noreturn]] void Miner::run() {
+bool Miner::is_done() const {
+    return done;
+}
+
+void Miner::join() {
+    thread.join();
+}
+
+void Miner::run(std::vector<std::atomic<bool>> &visited) {
     auto time_start = steady_clock::now();
-    uint64_t count_of_hashes_calculated = 0;
-    for (uint32_t nonce = 1; true; nonce++) {
 
-        if (nonce % 0x1000 == 0) {
-            simulate_lock();
-        }
-
-        std::string hash = b.calc_hash(nonce);
-        count_of_hashes_calculated++;
-        // ASSERT(b.calc_hash(nonce) == b.trivial_calc_hash(nonce), "failed");
-
-        if (hash < best_block_hash) {
-            best_block_hash = hash;
-            best_block = b;
-            is_good = hash[0] == 0 && hash[1] == 0 && hash[2] == 0; //&& hash[3] == 0;// && hash[4] == 0;
-            logger.print("NEW BEST BLOCK: " + bytes_to_hex(best_block_hash));
-        }
-
-        if (nonce % 0x1000 == 0) {
-            auto time_stop = steady_clock::now();
-            auto duration = time_stop - time_start;
-            double time = duration_cast<nanoseconds>(duration).count() / 1e9;
-
-            if (time > HASHRATE_UPDATE_TIME) {
-                time_start = time_stop;
-
-                int64_t hashrate = count_of_hashes_calculated / time;
-                hashrate_snapshot = hashrate;
-                count_of_hashes_calculated = 0;
-                logger.print("HASHRATE: " + pretty_hashrate(hashrate));
-
-                b.build_extranonce2();// продолжим с новым значением extranonce2
+    auto do_task = [&](uint32_t left, uint32_t right) {
+        //ASSERT(left <= right, "bad borders");
+        for (uint32_t nonce = left; nonce <= right; nonce++) {
+            std::string hash = current_block.calc_hash(nonce);
+            if (hash < best_block_hash) {
+                best_block_hash = hash;
+                best_nonce = current_block.get_nonce();
+                is_good = hash[0] == 0 && hash[1] == 0 && hash[2] == 0 && hash[3] == 0 && hash[4] == 0;
+                logger.print("NEW BEST BLOCK: " + bytes_to_hex(best_block_hash));
             }
         }
+        hash_calculated_count += right - left + 1;
+    };
+
+    for (uint32_t block_index = 0; block_index < TASK_BLOCKS_COUNT; block_index++) {
+        bool expected = false;
+        if (visited[block_index].compare_exchange_strong(expected, true)) {
+            uint32_t left = block_index * TASK_BLOCK_LEN;
+            uint32_t right = left + TASK_BLOCK_LEN - 1;
+
+            // logger.print(std::to_string(block_index) + ' ' + std::to_string(left) + ' ' + std::to_string(right));
+
+            do_task(left, right);
+        }
     }
+
+    auto time_stop = steady_clock::now();
+    auto duration = time_stop - time_start;
+    work_time = duration_cast<nanoseconds>(duration).count() / 1e9;
+
+    done = true;
 }

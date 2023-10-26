@@ -13,7 +13,7 @@ using json = nlohmann::json;
 void PoolClient::init() {
     // connect
     sockstream = std::move(tcp::iostream([&]() {
-        std::cout << "CONNECTION..." << std::endl;
+        logger.print("CONNECTION...");
         tcp::socket socket(io_context);
 
         tcp::resolver resolver(io_context);
@@ -23,8 +23,7 @@ void PoolClient::init() {
         boost::asio::connect(socket, endpoints, error_code);
 
         ASSERT(!error_code, "failed connect to server, message: " + error_code.message());
-        std::cout << "OK\n\n";
-        std::cout.flush();
+        logger.print("SUCCESS");
         return socket;
     }()));
 
@@ -63,7 +62,7 @@ void PoolClient::subscribe() {
 void PoolClient::authorize() {
     logger.print("AUTHORIZATION...");
 
-    sockstream << "{\"id\": 2, \"method\": \"mining.authorize\", \"params\": [\"" + WORKER_NAME + "\", \"123456\"]}\n";
+    sockstream << R"({"id": 2, "method": "mining.authorize", "params": [")" + WORKER_NAME + "\", \"123456\"]}\n";
 
     std::string response;
     while (true) {
@@ -80,7 +79,7 @@ void PoolClient::authorize() {
 block PoolClient::get_new_block(bool &new_miner_task) {
     logger.print("GET_NEW_BLOCK...");
 
-    std::string previous_block_hash, coinb1, coinb2, job_id;
+    std::string previous_block_hash, coinb1, coinb2;
     uint32_t nbits, version, timestamp;
     std::vector<std::string> merkle_branch;
     {
@@ -128,7 +127,6 @@ block PoolClient::get_new_block(bool &new_miner_task) {
     b.extranonce1 = extranonce1;
     b.extranonce2_size = extranonce2_size;
     b.merkle_branch = merkle_branch;
-    b.job_id = job_id;
 
     b.build_extranonce2();
 
@@ -142,11 +140,12 @@ block PoolClient::get_new_block(bool &new_miner_task) {
 void PoolClient::submit(const block &b) {
     logger.print("SUBMIT...");
 
-    sockstream << "{\"params\": [\"" + WORKER_NAME + "\", \"" + b.job_id +
-                          "\", \"" + b.extranonce2 + "\", \"" +
-                          integer_to_hex(b.timestamp, 8) + "\", \"" +
+    sockstream << R"({"params": [")" + WORKER_NAME + R"(", ")" + job_id +
+                          R"(", ")" + b.extranonce2 + R"(", ")" +
+                          integer_to_hex(b.timestamp, 8) + R"(", ")" +
                           integer_to_hex(b.nonce, 8) +
-                          "\"], \"id\": 4, \"method\": \"mining.submit\"}\n";
+                          R"("], "id": 4, "method": "mining.submit"})"
+               << "\n";
 
     json response;
     while (true) {
@@ -158,8 +157,7 @@ void PoolClient::submit(const block &b) {
                 break;
             }
         } catch (...) {
-            logger.print("try to reconnect to pool");
-            init();
+            logger.print("connection failed");
             return;
         }
     }
@@ -169,4 +167,14 @@ void PoolClient::submit(const block &b) {
 
 bool PoolClient::reading_is_available() {
     return sockstream.rdbuf()->available() != 0;
+}
+
+void PoolClient::update_connection() {
+    if (sockstream.error()) {
+        std::stringstream ss;
+        ss << "connection failed: " << sockstream.error();
+        logger.print(ss.str());
+        logger.print("try to reconnect");
+        init();
+    }
 }

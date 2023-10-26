@@ -1,8 +1,14 @@
 #pragma once
 
-const static double HASHRATE_UPDATE_TIME = 60;
+#include <string>
 
-const static uint32_t MAIN_THREAD_SLEEP_TIME_MS = 10;
+const uint32_t FAST_STRING_LEN = 256;
+
+constexpr static uint32_t MAIN_THREAD_SLEEP_TIME_MS = 10;
+
+constexpr uint64_t NONCE_BOUND = (1ULL << 24);
+constexpr uint32_t TASK_BLOCKS_COUNT = 256;
+constexpr uint32_t TASK_BLOCK_LEN = NONCE_BOUND / TASK_BLOCKS_COUNT;
 
 // solo.ckpool.org
 // bs.poolbinance.com

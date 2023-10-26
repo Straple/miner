@@ -13,11 +13,18 @@ using ip::tcp;
 
 class PoolClient {
 
+    // ======================
+
     boost::asio::io_context io_context;
     tcp::iostream sockstream;
 
+    // ======================
+
     std::string extranonce1;
-    int extranonce2_size;
+    int extranonce2_size = 0;
+    std::string job_id;
+
+    // ======================
 
     Logger logger;
 
@@ -47,4 +54,6 @@ public:
 
     // вернет true, если можно что-то считать у пула
     bool reading_is_available();
+
+    void update_connection();
 };
