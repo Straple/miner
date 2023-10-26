@@ -10,27 +10,31 @@ using json = nlohmann::json;
 
 #include "constants.hpp"
 
-PoolClient::PoolClient()
-    : sockstream([&]() {
-          std::cout << "CONNECTION..." << std::endl;
-          tcp::socket socket(io_context);
+void PoolClient::init() {
+    // connect
+    sockstream = std::move(tcp::iostream([&]() {
+        std::cout << "CONNECTION..." << std::endl;
+        tcp::socket socket(io_context);
 
-          tcp::resolver resolver(io_context);
-          auto endpoints = resolver.resolve(IP_ADDRESS, PORT);
+        tcp::resolver resolver(io_context);
+        auto endpoints = resolver.resolve(IP_ADDRESS, PORT);
 
-          boost::system::error_code error_code;
-          boost::asio::connect(socket, endpoints, error_code);
+        boost::system::error_code error_code;
+        boost::asio::connect(socket, endpoints, error_code);
 
-          ASSERT(!error_code, "failed connect to server, message: " + error_code.message());
-          std::cout << "OK\n\n";
-          std::cout.flush();
-          return socket;
-      }()),
-      logger("pool_client.txt") {
+        ASSERT(!error_code, "failed connect to server, message: " + error_code.message());
+        std::cout << "OK\n\n";
+        std::cout.flush();
+        return socket;
+    }()));
 
     subscribe();
 
     authorize();
+}
+
+PoolClient::PoolClient() : logger("pool_client.txt") {
+    init();
 }
 
 void PoolClient::subscribe() {
@@ -154,8 +158,9 @@ void PoolClient::submit(const block &b) {
                 break;
             }
         } catch (...) {
-            std::cerr << "json parse error: >" << str << "<\n";
-            break;
+            logger.print("try to reconnect to pool");
+            init();
+            return;
         }
     }
 

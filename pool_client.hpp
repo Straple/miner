@@ -4,8 +4,8 @@
 // подключение, подписка, авторизация, получение новых задач, отправка решений
 
 #include "block.hpp"
-#include <string>
 #include "logger.hpp"
+#include <string>
 
 #include <boost/asio.hpp>
 using namespace boost::asio;
@@ -20,6 +20,9 @@ class PoolClient {
     int extranonce2_size;
 
     Logger logger;
+
+    // connect + subscribe + authorize
+    void init();
 
     // подписывается
     void subscribe();

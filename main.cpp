@@ -10,21 +10,21 @@ using namespace std::chrono;
 #include "pool_client.hpp"
 
 int main(int argc, char **argv) {
-    int MINERS = 4;
+    int threads_count = 1;
     if (argc == 2) {
-        MINERS = std::atoi(argv[1]);
-        std::cout << "Miners count: " << MINERS << '\n';
+        threads_count = std::atoi(argv[1]);
+        std::cout << "Threads count: " << threads_count << '\n';
     }
 
     // connect to pool
     PoolClient pool_client;
 
-    std::vector<Miner> miners(MINERS);
+    std::vector<Miner> miners(threads_count);
     std::cout << "START MINERS...\n";
     {
         bool new_miner_task = false;
         block b = pool_client.get_new_block(new_miner_task);
-        for (uint32_t id = 0; id < MINERS; id++) {
+        for (uint32_t id = 0; id < threads_count; id++) {
             miners[id].Init(id, b);
         }
     }
@@ -35,7 +35,7 @@ int main(int argc, char **argv) {
     std::string best_block_hash = "z";
 
     while (true) {
-        for (uint32_t id = 0; id < MINERS; id++) {
+        for (uint32_t id = 0; id < threads_count; id++) {
             if (miners[id].available_good()) {
                 block b = miners[id].get_best_block();
                 pool_client.submit(b);
@@ -55,7 +55,7 @@ int main(int argc, char **argv) {
             block new_block = pool_client.get_new_block(new_miner_task);
 
             if (new_miner_task) {
-                for (uint32_t id = 0; id < MINERS; id++) {
+                for (uint32_t id = 0; id < threads_count; id++) {
                     miners[id].set_new_block(new_block);
                 }
             }
@@ -70,7 +70,7 @@ int main(int argc, char **argv) {
                 time_start = time_stop;
 
                 int64_t hashrate = 0;
-                for (uint32_t id = 0; id < MINERS; id++) {
+                for (uint32_t id = 0; id < threads_count; id++) {
                     hashrate += miners[id].hashrate();
                 }
 
