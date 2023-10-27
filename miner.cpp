@@ -8,11 +8,12 @@
 
 using namespace std::chrono;
 
-void Miner::init(uint32_t ID, lite_block new_block, uint32_t mining_round, std::vector<std::atomic<bool>> &visited) {
+void Miner::init(uint32_t ID, uint32_t miners_count, lite_block new_block) {
     id = ID;
     current_block = std::move(new_block);
-    logger = "worker" + std::to_string(mining_round) + "_" + std::to_string(ID) + "_" + ".txt";
-    thread = std::thread(&Miner::run, this, std::ref(visited));
+    //logger = "worker" + std::to_string(ID) + ".txt";
+    //logger = "worker" + std::to_string(mining_round) + "_" + std::to_string(ID) + ".txt";
+    thread = std::thread(&Miner::run, this, miners_count);
 }
 
 uint32_t Miner::get_best_nonce() {
@@ -39,18 +40,43 @@ void Miner::join() {
     thread.join();
 }
 
-void Miner::run(std::vector<std::atomic<bool>> &visited) {
+void Miner::run(uint32_t miners_count) {
     auto time_start = steady_clock::now();
 
-    auto do_task = [&](uint32_t left, uint32_t right) {
+    for (uint64_t nonce = id; nonce < NONCE_BOUND; nonce += miners_count) {
+        fast_string hash = current_block.calc_hash(nonce);
+        ASSERT(hash.size() == 32, "bad hash size");
+
+        // update best
+        if (hash < best_block_hash) {
+            best_block_hash = hash;
+            best_nonce = nonce;
+            is_good = hash[31] == 0 && hash[30] == 0 && hash[29] == 0 && hash[28] == 0 && hash[27] == 0;
+            // logger.print("NEW BEST BLOCK: ", bytes_to_hex(reverse_str(best_block_hash).to_str()));
+        }
+
+        // update counts
+        {
+            counts[hash.builtin_ctz()]++;
+        }
+    }
+
+    hash_calculated_count += NONCE_BOUND / miners_count;
+
+    /*auto do_task = [&](uint32_t left, uint32_t right) {
         //ASSERT(left <= right, "bad borders");
-        for (uint32_t nonce = left; nonce <= right; nonce++) {
-            std::string hash = current_block.calc_hash(nonce);
+        for (uint32_t nonce = left; true; nonce++) {
+            fast_string hash = current_block.calc_hash(nonce);
             if (hash < best_block_hash) {
                 best_block_hash = hash;
-                best_nonce = current_block.get_nonce();
-                is_good = hash[0] == 0 && hash[1] == 0 && hash[2] == 0 && hash[3] == 0 && hash[4] == 0;
-                logger.print("NEW BEST BLOCK: " + bytes_to_hex(best_block_hash));
+                best_nonce = nonce;
+                ASSERT(hash.size() == 32, "bad hash size");
+                is_good = hash[31] == 0 && hash[30] == 0 && hash[29] == 0 && hash[28] == 0 && hash[27] == 0;
+                // logger.print("NEW BEST BLOCK: ", bytes_to_hex(reverse_str(best_block_hash).to_str()));
+            }
+
+            if (nonce == right) {
+                break;
             }
         }
         hash_calculated_count += right - left + 1;
@@ -66,7 +92,7 @@ void Miner::run(std::vector<std::atomic<bool>> &visited) {
 
             do_task(left, right);
         }
-    }
+    }*/
 
     auto time_stop = steady_clock::now();
     auto duration = time_stop - time_start;

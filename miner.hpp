@@ -50,11 +50,15 @@ struct Miner {
 
     lite_block current_block;// текущий блок, который мы добываем
 
-    std::string best_block_hash = "z";
+    // statistic
+    fast_string best_block_hash = std::string(80, 'z');
     uint32_t best_nonce;
     bool is_good = false;
 
-    Logger logger;
+    // counts[x]
+    std::vector<uint32_t> counts = std::vector<uint32_t>(64);
+
+    //Logger logger;
 
     int64_t hash_calculated_count = 0;
 
@@ -64,7 +68,7 @@ struct Miner {
     bool done = false;
 
 public:
-    void init(uint32_t ID, lite_block new_block, uint32_t mining_round, std::vector<std::atomic<bool>> &visited);
+    void init(uint32_t ID, uint32_t miners_count, lite_block new_block);
 
     uint32_t get_best_nonce();
 
@@ -76,5 +80,5 @@ public:
 
     void join();
 
-    void run(std::vector<std::atomic<bool>> &visited);
+    void run(uint32_t miners_count);
 };

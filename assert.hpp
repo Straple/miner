@@ -21,7 +21,7 @@
 
 #else
 
-#define ASSERT(condition, message) condition
+#define ASSERT(condition, message) // condition
 
 #endif  // DEBUG_MODE
 

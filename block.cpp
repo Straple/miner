@@ -11,9 +11,9 @@
     const uint64_t exponent = nbits >> 24;
     const uint64_t mantissa = nbits & 0xffffff;
 
-    fast_string x = "1";
+    fast_string x = std::string("1");
     for (int i = 0; i < 8 * (exponent - 3); i++) {
-        x = hex_multiply(x, "2");
+        x = hex_multiply(x, std::string("2"));
     }
     fast_string target =
             hex_multiply(reverse_str(integer_to_hex(mantissa, 6)), x);
@@ -30,18 +30,18 @@ fast_string block::calc_hash(uint32_t x) {
     for (int i = 0; i < 4; i++) {
         save_bytes_data[80 - 4 + i] = (x >> (8 * i)) & 0xff;
     }
-    return reverse_str(sha256(sha256(save_bytes_data)));
+    return sha256(sha256(save_bytes_data));
 }
 
 // 51KH/s
 fast_string block::trivial_calc_hash(uint32_t nonce) {
     // std::string extranonce2(extranonce2_size * 2, '0');  // random fill
 
-    fast_string coinbase = coinb1 + extranonce1 + extranonce2 + coinb2;
+    std::string coinbase = hex_to_bytes(coinb1) + hex_to_bytes(extranonce1) + hex_to_bytes(extranonce2.to_str()) + hex_to_bytes(coinb2);
 
     // std::cout << "coinbase: " << coinbase << "\n\n";
 
-    fast_string coinbase_hash_bin = sha256(sha256(hex_to_bytes(coinbase)));
+    fast_string coinbase_hash_bin = sha256(sha256(coinbase));
 
     merkle_root_hash = coinbase_hash_bin;
     for (auto hash: merkle_branch) {
@@ -63,26 +63,28 @@ fast_string block::trivial_calc_hash(uint32_t nonce) {
     // ===============
 
     fast_string block_header =
-            byte_reverse_in_hex(integer_to_hex(version, 8)) + previous_block_hash +
-            merkle_root_hash + byte_reverse_in_hex(integer_to_hex(timestamp, 8)) +
-            byte_reverse_in_hex(integer_to_hex(nbits, 8)) +
-            byte_reverse_in_hex(integer_to_hex(nonce, 8));
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(version, 8))) +
+            hex_to_bytes(previous_block_hash) +
+            hex_to_bytes(merkle_root_hash) +
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(timestamp, 8))) +
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(nbits, 8))) +
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(nonce, 8)));
 
-    ASSERT(block_header.size() == 2 * 80, "must be 80 bytes");
+    ASSERT(block_header.size() == 80, "must be 80 bytes");
 
     // std::cout << "calc_triv: " << block_header << '\n';
 
-    return reverse_str(sha256(sha256(hex_to_bytes(block_header))));
+    return sha256(sha256(block_header));
 }
 
 void block::build_data() {
     // std::string extranonce2(extranonce2_size * 2, '0');  // random fill
 
-    fast_string coinbase = coinb1 + extranonce1 + extranonce2 + coinb2;
+    std::string coinbase = hex_to_bytes(coinb1) + hex_to_bytes(extranonce1) + hex_to_bytes(extranonce2.to_str()) + hex_to_bytes(coinb2);
 
     // std::cout << "coinbase: " << coinbase << "\n\n";
 
-    fast_string coinbase_hash_bin = sha256(sha256(hex_to_bytes(coinbase)));
+    fast_string coinbase_hash_bin = sha256(sha256(coinbase));
 
     merkle_root_hash = coinbase_hash_bin;
     for (auto hash: merkle_branch) {
@@ -103,16 +105,18 @@ void block::build_data() {
     // ===============
 
     fast_string block_header =
-            byte_reverse_in_hex(integer_to_hex(version, 8)) + previous_block_hash +
-            merkle_root_hash + byte_reverse_in_hex(integer_to_hex(timestamp, 8)) +
-            byte_reverse_in_hex(integer_to_hex(nbits, 8)) +
-            byte_reverse_in_hex(integer_to_hex(nonce, 8));
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(version, 8))) +
+            hex_to_bytes(previous_block_hash) +
+            hex_to_bytes(merkle_root_hash) +
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(timestamp, 8))) +
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(nbits, 8))) +
+            hex_to_bytes(byte_reverse_in_hex(integer_to_hex(nonce, 8)));
 
-    ASSERT(block_header.size() == 2 * 80, "must be 80 bytes");
+    ASSERT(block_header.size() == 80, "must be 80 bytes");
 
     // std::cout << "build_data:" << block_header << '\n';
 
-    save_bytes_data = hex_to_bytes(block_header);
+    save_bytes_data = block_header;
     /*save_bytes_data = hex_to_bytes(
         byte_reverse_in_hex(integer_to_hex(version, 8)) +
         byte_reverse_in_hex(previous_block_hash) +

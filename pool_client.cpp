@@ -52,11 +52,11 @@ void PoolClient::subscribe() {
 
     json data = json::parse(response);
 
-    extranonce1 = data["result"][1];
+    extranonce1 = std::string(data["result"][1]);
     extranonce2_size = data["result"][2];
 
-    logger.print("extranonce1: " + extranonce1);
-    logger.print("extranonce2_size: " + std::to_string(extranonce2_size));
+    logger.print("extranonce1: ", extranonce1);
+    logger.print("extranonce2_size: ", std::to_string(extranonce2_size));
 }
 
 void PoolClient::authorize() {
@@ -79,9 +79,10 @@ void PoolClient::authorize() {
 block PoolClient::get_new_block(bool &new_miner_task) {
     logger.print("GET_NEW_BLOCK...");
 
-    std::string previous_block_hash, coinb1, coinb2;
+    fast_string previous_block_hash;
+    std::string coinb1, coinb2;
     uint32_t nbits, version, timestamp;
-    std::vector<std::string> merkle_branch;
+    std::vector<fast_string> merkle_branch;
     {
         json data;
         while (true) {
@@ -95,14 +96,19 @@ block PoolClient::get_new_block(bool &new_miner_task) {
 
         //std::cout << "DATA: >" << data << "<\n\n";
 
-        job_id = data["params"][0];
-        previous_block_hash = data["params"][1];
-        coinb1 = data["params"][2];
-        coinb2 = data["params"][3];
-        merkle_branch = data["params"][4];
-        version = hex_to_integer(reverse_str(data["params"][5]));
-        nbits = hex_to_integer(data["params"][6]);
-        timestamp = hex_to_integer(data["params"][7]);
+        job_id = std::string(data["params"][0]);
+        previous_block_hash = std::string(data["params"][1]);
+        coinb1 = std::string(data["params"][2]);
+        coinb2 = std::string(data["params"][3]);
+
+        //merkle_branch = data["params"][4];
+        for (auto value: data["params"][4]) {
+            merkle_branch.emplace_back(std::string(value));
+        }
+
+        version = hex_to_integer(reverse_str(std::string(data["params"][5])));
+        nbits = hex_to_integer(std::string(data["params"][6]));
+        timestamp = hex_to_integer(std::string(data["params"][7]));
 
         /*std::cout << "job_id: " << job_id << "\n\n";
             std::cout << "previous_block_hash: \"" << previous_block_hash << "\"\n\n";
@@ -140,10 +146,10 @@ block PoolClient::get_new_block(bool &new_miner_task) {
 void PoolClient::submit(const block &b) {
     logger.print("SUBMIT...");
 
-    sockstream << R"({"params": [")" + WORKER_NAME + R"(", ")" + job_id +
-                          R"(", ")" + b.extranonce2 + R"(", ")" +
-                          integer_to_hex(b.timestamp, 8) + R"(", ")" +
-                          integer_to_hex(b.nonce, 8) +
+    sockstream << R"({"params": [")" + WORKER_NAME + R"(", ")" + job_id.to_str() +
+                          R"(", ")" + b.extranonce2.to_str() + R"(", ")" +
+                          integer_to_hex(b.timestamp, 8).to_str() + R"(", ")" +
+                          integer_to_hex(b.nonce, 8).to_str() +
                           R"("], "id": 4, "method": "mining.submit"})"
                << "\n";
 
@@ -171,9 +177,7 @@ bool PoolClient::reading_is_available() {
 
 void PoolClient::update_connection() {
     if (sockstream.error()) {
-        std::stringstream ss;
-        ss << "connection failed: " << sockstream.error();
-        logger.print(ss.str());
+        logger.print("connection failed: ", sockstream.error());
         logger.print("try to reconnect");
         init();
     }

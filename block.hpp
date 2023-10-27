@@ -7,18 +7,18 @@
 #include "fast_string.hpp"
 
 struct block {
-    uint32_t version;               // 4 bytes
+    uint32_t version=0;               // 4 bytes
     fast_string previous_block_hash;// 32 bytes
     fast_string merkle_root_hash;   // 32 bytes
-    uint32_t timestamp;             // 4 bytes
-    uint32_t nbits;                 // 4 bytes
-    uint32_t nonce;                 // 4 bytes
+    uint32_t timestamp=0;             // 4 bytes
+    uint32_t nbits=0;                 // 4 bytes
+    uint32_t nonce=0;                 // 4 bytes
 
     fast_string extranonce2;
 
     std::vector<fast_string> merkle_branch;
-    fast_string coinb1, coinb2, extranonce1;
-    int extranonce2_size;
+    std::string coinb1, coinb2, extranonce1;
+    int extranonce2_size=0;
 
     fast_string save_bytes_data;
 

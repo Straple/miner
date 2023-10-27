@@ -22,7 +22,7 @@ class PoolClient {
 
     std::string extranonce1;
     int extranonce2_size = 0;
-    std::string job_id;
+    fast_string job_id;
 
     // ======================
 

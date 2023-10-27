@@ -5,14 +5,14 @@
 #include <sstream>
 #include <vector>
 
-std::string byte_to_hex(unsigned char byte) {
+fast_string byte_to_hex(unsigned char byte) {
     std::stringstream ss;
     ss << std::hex << static_cast<int>(byte);
     return ss.str();
 }
 
-std::string integer_to_hex(uint64_t integer, uint64_t len) {
-    std::string result;
+fast_string integer_to_hex(uint64_t integer, uint64_t len) {
+    fast_string result;
     while (len != 0) {
         len--;
         int digit = integer % 16;
@@ -23,12 +23,13 @@ std::string integer_to_hex(uint64_t integer, uint64_t len) {
             result += 'a' + digit - 10;
         }
     }
+
     std::reverse(result.begin(), result.end());
     return result;
 }
 
-std::string integer_to_bytes(uint64_t integer, uint64_t len) {
-    std::string result;
+fast_string integer_to_bytes(uint64_t integer, uint64_t len) {
+    fast_string result;
     while (len != 0) {
         len--;
         result += static_cast<char>(integer % 256);
@@ -45,11 +46,26 @@ uint64_t hex_to_integer(char hex_code) {
     }
 }
 
-uint64_t hex_to_integer(std::string hex_str) {
+uint64_t hex_to_integer(fast_string hex_str) {
     uint64_t result = 0;
     for (char c: hex_str) {
         result *= 16;
         result += hex_to_integer(c);
+    }
+    return result;
+}
+
+fast_string hex_to_bytes(const fast_string &hex_str) {
+    fast_string result;
+    uint64_t byte = 0;
+    for (int i = 0; i + 1 < hex_str.size(); i += 2) {
+        byte = 16 * hex_to_integer(hex_str[i]) + hex_to_integer(hex_str[i + 1]);
+        ASSERT(byte < 256, "bad byte");
+        result += static_cast<char>(byte);
+    }
+    if (hex_str.size() % 2 == 1) {
+        ASSERT(false, "why is not dividing by 2?");
+        result += static_cast<char>(hex_to_integer(hex_str.back()));
     }
     return result;
 }
@@ -69,9 +85,9 @@ std::string hex_to_bytes(const std::string &hex_str) {
     return result;
 }
 
-std::string bytes_to_hex(const std::string &bytes) {
-    std::string hex;
-    hex.reserve(bytes.size() * 2);
+fast_string bytes_to_hex(const fast_string &bytes) {
+    fast_string hex;
+    //hex.reserve(bytes.size() * 2);
     for (unsigned char byte: bytes) {
         hex += byte_to_hex(byte >> 4);
         hex += byte_to_hex(byte & 0xf);
@@ -79,7 +95,17 @@ std::string bytes_to_hex(const std::string &bytes) {
     return hex;
 }
 
-std::string hex_multiply(const std::string &lhs, const std::string &rhs) {
+std::string bytes_to_hex(const std::string &bytes) {
+    std::string hex;
+    //hex.reserve(bytes.size() * 2);
+    for (unsigned char byte: bytes) {
+        hex += byte_to_hex(byte >> 4).to_str();
+        hex += byte_to_hex(byte & 0xf).to_str();
+    }
+    return hex;
+}
+
+fast_string hex_multiply(const fast_string &lhs, const fast_string &rhs) {
     std::vector<uint64_t> data(lhs.size() + rhs.size() + 10, 0);
     for (int i = 0; i < lhs.size(); i++) {
         for (int j = 0; j < rhs.size(); j++) {
@@ -94,14 +120,14 @@ std::string hex_multiply(const std::string &lhs, const std::string &rhs) {
     while (!data.empty() && data.back() == 0) {
         data.pop_back();
     }
-    std::string ans;
+    fast_string ans;
     for (auto x: data) {
         ans += byte_to_hex(x);
     }
     return ans;
 }
 
-std::string byte_reverse_in_hex(std::string hex_str) {
+fast_string byte_reverse_in_hex(fast_string hex_str) {
     ASSERT(hex_str.size() % 2 == 0, "bad hex_str len");
     for (int i = 0; 2 * i < hex_str.size(); i += 2) {
         int l = 2 * i;
@@ -112,7 +138,7 @@ std::string byte_reverse_in_hex(std::string hex_str) {
     return hex_str;
 }
 
-std::string reverse_str(std::string str) {
+fast_string reverse_str(fast_string str) {
     std::reverse(str.begin(), str.end());
     return str;
 }
