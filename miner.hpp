@@ -41,24 +41,22 @@ if (mutex == mutex_t::WAITED_FOR_LOCK) {
 }
 */
 
+#include "statistic.hpp"
 #include "utils.hpp"
 
-struct Miner {
+class Miner {
     std::thread thread;
 
     uint32_t id = -1;// id майнера
 
     lite_block current_block;// текущий блок, который мы добываем
 
-    // statistic
-    fast_string best_block_hash = std::string(80, 'z');
     uint32_t best_nonce;
     bool is_good = false;
 
-    // counts[x]
-    std::vector<uint32_t> counts = std::vector<uint32_t>(64);
+    Statistic state;
 
-    //Logger logger;
+    // Logger logger;
 
     int64_t hash_calculated_count = 0;
 
@@ -72,11 +70,13 @@ public:
 
     uint32_t get_best_nonce();
 
-    bool available_good() const;
+    [[nodiscard]] int64_t get_hashrate() const;
 
-    int64_t hashrate() const;
+    Statistic &get_statistic();
 
-    bool is_done() const;
+    [[nodiscard]] bool available_good() const;
+
+    [[nodiscard]] bool is_done() const;
 
     void join();
 

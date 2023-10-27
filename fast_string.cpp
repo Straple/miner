@@ -173,6 +173,5 @@ fast_string operator+(fast_string lhs, const fast_string &rhs) {
 uint32_t fast_string::builtin_ctz() const {
     int k = len - 1;
     for (; k >= 0 && data[k] == 0; k--) {}
-
     return (len - 1 - k) * 8 + (__builtin_clz(uint8_t(data[k])) - 24);
 }

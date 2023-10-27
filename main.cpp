@@ -9,33 +9,105 @@ using namespace std::chrono;
 #include "miner.hpp"
 #include "pool_client.hpp"
 
+// reading from blocks dataset
+// [80 bytes of best block bytes data, statistic]
+std::pair<fast_string, Statistic> read_block_data(std::istream &input) {
+    std::string tmp;
+    input >> tmp >> tmp;// skip "[2023-10-27 16:21:36]"
+
+    std::string best_hash;
+    input >> best_hash;
+
+    std::string block_bytes_data;
+    input >> block_bytes_data;
+
+    std::cout << "best_hash: " << best_hash << std::endl;
+    std::cout << "block_bytes_data: " << block_bytes_data << std::endl;
+
+    input >> tmp;
+    ASSERT(tmp == "COUNTS:", "invalid input");
+
+    Statistic state;
+    for (uint32_t index = 0; index < state.LEN; index++) {
+        input >> state.counts[index];
+        //std::cout << state.counts[index] << ' ';
+    }
+    //std::cout << std::endl;
+
+    input >> tmp;
+    ASSERT(tmp == "EXEMPLARS:", "invalid input");
+
+    for (uint32_t index = 0; index < state.LEN; index++) {
+        input >> state.exemplar[index];
+        //std::cout << state.exemplar[index] << ' ';
+    }
+    //std::cout << std::endl;
+
+    input >> tmp;
+    ASSERT(tmp == "EXEMPLARS_HASH:", "invalid input");
+
+    for (uint32_t index = 0; index < state.LEN; index++) {
+        input >> tmp;
+        state.exemplar_hash[index] = reverse_str(hex_to_bytes(tmp));
+        //std::cout << state.exemplar_hash[index] << ' ';
+    }
+    //std::cout << std::endl;
+
+    for (int index = state.LEN - 1; index >= 0; index--) {
+        if (state.counts[index] != 0) {
+            state.best_index = index;
+            break;
+        }
+    }
+
+    // bytes_to_hex(current_block.save_bytes_data.to_str());
+
+    lite_block b(hex_to_bytes(block_bytes_data));
+
+    // std::cout << bytes_to_hex(reverse_str(b.calc_hash(state.get_best().first))) << std::endl;
+    // std::cout << bytes_to_hex(reverse_str(state.get_best().second).to_str()) << std::endl;
+    ASSERT(b.calc_hash(state.get_best().first) == state.get_best().second, "invalid bytes data");
+
+    return {hex_to_bytes(block_bytes_data), state};
+}
+
 int main(int argc, char **argv) {
-
-    fast_string s(2);
-    s[0] = 0b100000;
+    /*std::ifstream input("blocks_dataset.txt");
+    auto [block_bytes_data, state] = read_block_data(input);
+    std::cout << "\n\n";
+    std::cout << bytes_to_hex(block_bytes_data.to_str()) << std::endl;
+    return 0;*/
+    /*fast_string s(2);
+    s[0] = 0b00110000;
     std::cout << s.builtin_ctz() << std::endl;
-    std::string lol = "00000000000000000000";
-    std::cout << "lol: " << lol.size() << '\n';
-    s = reverse_str(hex_to_bytes(lol));
-    std::cout << s.size() << '\n';
-    std::cout << s.builtin_ctz() << std::endl;
+    return 0;*/
+    /*for(int p = 1; p < 16; p++){
+        std::cout << p << ' ';
+        std::string lol = "0000";
+        lol[3] = p < 10 ? (p + '0') : (p - 10 + 'a');
+        std::cout << lol << ' ' << uint32_t(uint8_t(hex_to_bytes(lol)[0])) << ' ';
+        fast_string s = reverse_str(hex_to_bytes(lol));
+        std::cout << s.builtin_ctz() << ' ';
 
-    fast_string hash = reverse_str(s);
+        fast_string hash = reverse_str(s);
 
-    uint32_t x = 0;
-    for (; x < 32 && hash[x] == 0; x++) {
-    }
-    int bit = 7;
-    for (; bit >= 0 && ((uint8_t(hash[x]) >> bit) & 1) == 0; bit--) {
-    }
-    //counts[x * 8 + (7 - bit)]++;
-    std::cout << x * 8 + (7 - bit) << '\n';
+        uint32_t x = 0;
+        for (; x < 32 && hash[x] == 0; x++) {
+        }
+        int bit = 7;
+        for (; bit >= 0 && ((uint8_t(hash[x]) >> bit) & 1) == 0; bit--) {
+        }
+        //counts[x * 8 + (7 - bit)]++;
+        std::cout << x * 8 + (7 - bit) << '\n';
+    }*/
 
     //uint32_t x = 0xa00ab0c1;
     //std::cout << bytes_to_hex(integer_to_bytes(x, 4)) << '\n';
 
     // bytes_to_hex(reverse_str(best_block_hash).to_str())
-    return 0;
+    //return 0;
+
+    //===============================================================
 
     /*fast_string lhs(80);
     fast_string rhs(80);
@@ -126,6 +198,24 @@ int main(int argc, char **argv) {
 
     uint64_t mining_round_count = 0;
 
+    auto merge_statistic = [&](std::vector<Miner> &miners) {
+        // соберем статистику
+        Statistic state;
+        for (uint32_t id = 0; id < threads_count; id++) {
+            state.add(miners[id].get_statistic());
+            /*uint32_t nonce = miners[id].get_best_nonce();
+            fast_string hash = current_block.calc_hash(nonce);
+            ASSERT(current_block.calc_hash(nonce) == current_block.trivial_calc_hash(nonce), "invalid hash");
+            ASSERT(current_block.calc_hash(nonce) == miners[id].current_block.calc_hash(nonce), "invalid hash");
+            if (!(current_block.calc_hash(nonce) == miners[id].best_block_hash)) {
+                std::cout << current_block.calc_hash(nonce) << std::endl;
+                std::cout << miners[id].best_block_hash << std::endl;
+            }
+            ASSERT(current_block.calc_hash(nonce) == miners[id].best_block_hash, "invalid hash");*/
+        }
+        return state;
+    };
+
     // NOLINTNEXTLINE
     auto mining = [&]() {
         auto time_start = steady_clock::now();
@@ -172,40 +262,23 @@ int main(int argc, char **argv) {
             miners[id].join();
         }
 
-        fast_string best_block_hash = std::string(80, 'z');
-        uint32_t best_nonce = -1;
-        for (uint32_t id = 0; id < threads_count; id++) {
-            uint32_t nonce = miners[id].get_best_nonce();
-            fast_string hash = current_block.calc_hash(nonce);
-            ASSERT(current_block.calc_hash(nonce) == current_block.trivial_calc_hash(nonce), "invalid hash");
-            ASSERT(current_block.calc_hash(nonce) == miners[id].current_block.calc_hash(nonce), "invalid hash");
-            if (!(current_block.calc_hash(nonce) == miners[id].best_block_hash)) {
-                std::cout << current_block.calc_hash(nonce) << std::endl;
-                std::cout << miners[id].best_block_hash << std::endl;
-            }
-            ASSERT(current_block.calc_hash(nonce) == miners[id].best_block_hash, "invalid hash");
+        Statistic state = merge_statistic(miners);
 
-            if (hash < best_block_hash) {
-                best_block_hash = hash;
-                best_nonce = nonce;
-            }
-        }
+        auto [best_nonce, best_hash] = state.get_best();
 
-
-        ASSERT(current_block.calc_hash(best_nonce) == best_block_hash, "invalid best_block_hash");
-
+        ASSERT(best_hash == current_block.calc_hash(best_nonce), "invalid best hash");
         current_block.calc_hash(best_nonce);// нужно обязательно вычислить еще раз, чтобы обновить nonce на best_nonce
-        blocks_dataset.print(bytes_to_hex(reverse_str(best_block_hash).to_str()), ' ', bytes_to_hex(current_block.save_bytes_data.to_str()));
+        blocks_dataset.print(bytes_to_hex(reverse_str(best_hash).to_str()), ' ', bytes_to_hex(current_block.save_bytes_data.to_str()), "\n", state, "\n");
 
         {
             int64_t hashrate_sum = 0;
             for (uint32_t id = 0; id < threads_count; id++) {
-                hashrate_sum += miners[id].hashrate();
+                hashrate_sum += miners[id].get_hashrate();
             }
             std::stringstream ss;
             ss << "Hashrate: " << pretty_hashrate(hashrate_sum) << " | ";
             for (uint32_t id = 0; id < threads_count; id++) {
-                ss << pretty_hashrate(miners[id].hashrate()) << ' ';
+                ss << pretty_hashrate(miners[id].get_hashrate()) << ' ';
             }
             miners_statistic.print(ss.str());
         }
@@ -220,15 +293,6 @@ int main(int argc, char **argv) {
     };
 
     while (true) {
-
-        // посмотрит, есть ли там что-то для чтения
-        if (pool_client.reading_is_available()) {
-            // если есть,
-            // то мы это считаем и посмотрим
-            bool new_miner_task = false;
-            current_block = pool_client.get_new_block(new_miner_task);
-        }
-
         pool_client.update_connection();
 
         // посмотрит, есть ли там что-то для чтения
@@ -240,5 +304,6 @@ int main(int argc, char **argv) {
         }
 
         mining();
+        //return 0;
     }
 }

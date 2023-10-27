@@ -7,6 +7,7 @@
 #include "fast_string.hpp"
 
 struct block {
+    // total: 80 bytes
     uint32_t version=0;               // 4 bytes
     fast_string previous_block_hash;// 32 bytes
     fast_string merkle_root_hash;   // 32 bytes
