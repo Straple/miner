@@ -8,6 +8,7 @@ using namespace std::chrono;
 #include "constants.hpp"
 #include "miner.hpp"
 #include "pool_client.hpp"
+#include "assert.hpp"
 
 // reading from blocks dataset
 // [80 bytes of best block bytes data, statistic]
@@ -206,15 +207,14 @@ void run_miner(int argc, char **argv) {
         Statistic state;
         for (uint32_t id = 0; id < threads_count; id++) {
             state.add(miners[id].get_statistic());
-            /*uint32_t nonce = miners[id].get_best_nonce();
+
+#ifdef DEBUG_MODE
+            uint32_t nonce = miners[id].get_best_nonce();
             fast_string hash = current_block.calc_hash(nonce);
-            ASSERT(current_block.calc_hash(nonce) == current_block.trivial_calc_hash(nonce), "invalid hash");
-            ASSERT(current_block.calc_hash(nonce) == miners[id].current_block.calc_hash(nonce), "invalid hash");
-            if (!(current_block.calc_hash(nonce) == miners[id].best_block_hash)) {
-                std::cout << current_block.calc_hash(nonce) << std::endl;
-                std::cout << miners[id].best_block_hash << std::endl;
-            }
-            ASSERT(current_block.calc_hash(nonce) == miners[id].best_block_hash, "invalid hash");*/
+            ASSERT(miners[id].get_statistic().get_best().first == nonce, "invalid best nonce");
+            ASSERT(current_block.calc_hash(nonce) == miners[id].get_statistic().get_best().second, "invalid best hash");
+            ASSERT(current_block.trivial_calc_hash(nonce) == miners[id].get_statistic().get_best().second, "invalid best hash");
+#endif
         }
         ASSERT(state.get_sum_count() == NONCE_BOUND, "FATAL");
         return state;
@@ -320,7 +320,7 @@ void run_miner(int argc, char **argv) {
 
 int main(int argc, char **argv) {
     run_miner(argc, argv);
-    /*std::ifstream input("blocks_dataset.txt");
+    /*std::ifstream input("ready_dataset.txt");
     std::vector<std::pair<fast_string, Statistic>> blocks;
     for (int i = 0; i < 651; i++) {
         auto [block_bytes_data, state] = read_block_data(input);

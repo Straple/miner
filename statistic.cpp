@@ -4,14 +4,15 @@
 
 bool Statistic::add(uint32_t nonce, const fast_string &hash) {
     uint32_t index = hash.builtin_ctz();
-    bool result = best_index < index || (best_index == index && hash < exemplar_hash[index]);
+    bool result = false;
 
-    best_index = std::max(best_index, index);
     if (counts[index] == 0 || hash < exemplar_hash[index]) {
         exemplar[index] = nonce;
         exemplar_hash[index] = hash;
+        result = best_index <= index;
     }
     counts[index]++;
+    best_index = std::max(best_index, index);
     return result;
 }
 
