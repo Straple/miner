@@ -34,6 +34,14 @@ std::pair<uint32_t, fast_string> Statistic::get_best() const {
     return {exemplar[best_index], exemplar_hash[best_index]};
 }
 
+uint64_t Statistic::get_sum_count() const {
+    uint64_t sum = 0;
+    for (uint32_t index = 0; index < LEN; index++) {
+        sum += counts[index];
+    }
+    return sum;
+}
+
 std::ostream &operator<<(std::ostream &output, const Statistic &state) {
     output << "COUNTS: ";
     for (auto &item: state.counts) {

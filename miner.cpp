@@ -8,12 +8,11 @@
 
 using namespace std::chrono;
 
-void Miner::init(uint32_t ID, uint32_t miners_count, lite_block new_block) {
-    id = ID;
-    current_block = std::move(new_block);
+void Miner::init(lite_block new_block, std::vector<std::atomic<bool>> &visited) {
+    current_block = new_block;
     // logger = "worker" + std::to_string(ID) + ".txt";
     // logger = "worker" + std::to_string(mining_round) + "_" + std::to_string(ID) + ".txt";
-    thread = std::thread(&Miner::run, this, miners_count);
+    thread = std::thread(&Miner::run, this, std::ref(visited));
 }
 
 uint32_t Miner::get_best_nonce() {
@@ -44,10 +43,36 @@ void Miner::join() {
     thread.join();
 }
 
-void Miner::run(uint32_t miners_count) {
+void Miner::run(std::vector<std::atomic<bool>> &visited) {
     auto time_start = steady_clock::now();
 
-    for (uint64_t nonce = id; nonce < NONCE_BOUND; nonce += miners_count) {
+    auto do_task = [&](uint64_t left, uint64_t right) {
+        ASSERT(left <= right, "bad borders");
+        for (uint64_t nonce = left; nonce <= right; nonce++) {
+            fast_string hash = current_block.calc_hash(nonce);
+
+            if (state.add(nonce, hash)) {
+                best_nonce = nonce;
+                is_good = hash[31] == 0 && hash[30] == 0 && hash[29] == 0 && hash[28] == 0 && hash[27] == 0;
+                // logger.print("NEW BEST BLOCK: ", bytes_to_hex(reverse_str(hash).to_str()));
+            }
+        }
+        hash_calculated_count += right - left + 1;
+    };
+
+    for (uint64_t block_index = 0; block_index < TASK_BLOCKS_COUNT; block_index++) {
+        bool expected = false;
+        if (visited[block_index].compare_exchange_strong(expected, true)) {
+            uint64_t left = block_index * TASK_BLOCK_LEN;
+            uint64_t right = left + TASK_BLOCK_LEN - 1;
+
+            // logger.print(std::to_string(block_index) + ' ' + std::to_string(left) + ' ' + std::to_string(right));
+
+            do_task(left, right);
+        }
+    }
+
+    /*for (uint64_t nonce = id; nonce < NONCE_BOUND; nonce += miners_count) {
         fast_string hash = current_block.calc_hash(nonce);
         ASSERT(hash.size() == 32, "bad hash size");
 
@@ -58,7 +83,7 @@ void Miner::run(uint32_t miners_count) {
         }
     }
 
-    hash_calculated_count += NONCE_BOUND / miners_count;
+    hash_calculated_count += NONCE_BOUND / miners_count;*/
 
     auto time_stop = steady_clock::now();
     auto duration = time_stop - time_start;

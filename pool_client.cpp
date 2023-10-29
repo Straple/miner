@@ -33,7 +33,7 @@ void PoolClient::init() {
 }
 
 PoolClient::PoolClient() : logger("pool_client.txt") {
-    init();
+    //init();
 }
 
 void PoolClient::subscribe() {

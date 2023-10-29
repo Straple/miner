@@ -47,8 +47,6 @@ if (mutex == mutex_t::WAITED_FOR_LOCK) {
 class Miner {
     std::thread thread;
 
-    uint32_t id = -1;// id майнера
-
     lite_block current_block;// текущий блок, который мы добываем
 
     uint32_t best_nonce;
@@ -66,7 +64,7 @@ class Miner {
     bool done = false;
 
 public:
-    void init(uint32_t ID, uint32_t miners_count, lite_block new_block);
+    void init(lite_block new_block, std::vector<std::atomic<bool>> &visited);
 
     uint32_t get_best_nonce();
 
@@ -80,5 +78,5 @@ public:
 
     void join();
 
-    void run(uint32_t miners_count);
+    void run(std::vector<std::atomic<bool>> &visited);
 };

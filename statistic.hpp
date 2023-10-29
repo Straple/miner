@@ -4,7 +4,7 @@
 #include "fast_string.hpp"
 #include <vector>
 
-class Statistic {
+struct Statistic {
     inline const static uint32_t LEN = 256;
     std::vector<uint32_t> counts = std::vector<uint32_t>(LEN);
     std::vector<fast_string> exemplar_hash = std::vector<fast_string>(LEN, std::string("\1"));
@@ -17,6 +17,8 @@ public:
     void add(const Statistic &other);
 
     [[nodiscard]] std::pair<uint32_t, fast_string> get_best() const;
+
+    [[nodiscard]] uint64_t get_sum_count() const;
 
     friend std::ostream &operator<<(std::ostream &output, const Statistic &state);
 

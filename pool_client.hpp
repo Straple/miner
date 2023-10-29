@@ -28,9 +28,6 @@ class PoolClient {
 
     Logger logger;
 
-    // connect + subscribe + authorize
-    void init();
-
     // подписывается
     void subscribe();
 
@@ -38,6 +35,9 @@ class PoolClient {
     void authorize();
 
 public:
+    // connect + subscribe + authorize
+    void init();
+
     // подключается к пулу, подписывается и авторизуется
     PoolClient();
 
