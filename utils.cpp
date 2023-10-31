@@ -1,4 +1,5 @@
 #include "utils.hpp"
+#include "assert.hpp"
 
 std::mt19937 &get_random_engine() {
     static std::mt19937 rnd(42);
@@ -7,6 +8,15 @@ std::mt19937 &get_random_engine() {
 
 uint32_t rnd() {
     return get_random_engine()();
+}
+
+int rnd(int left, int right) {
+    ASSERT(left <= right, "bad borders");
+    return static_cast<int>(rnd() % static_cast<uint32_t>(right - left + 1)) + left;
+}
+
+double rnd_chance(){
+    return static_cast<double>(rnd()) / UINT32_MAX;
 }
 
 std::string pretty_hashrate(uint64_t hashrate) {

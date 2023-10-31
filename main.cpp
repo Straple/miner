@@ -318,8 +318,18 @@ void run_miner(int argc, char **argv) {
     }
 }
 
+#include "genome_neurons.hpp"
+
 int main(int argc, char **argv) {
-    run_miner(argc, argv);
+    std::ifstream input("2.txt");
+    auto [block_bytes_data, state] = read_block_data(input);
+    lite_block b(block_bytes_data);
+    std::cout << bytes_to_hex(reverse_str(b.calc_hash(1787677545))) << std::endl;
+    std::cout << b.calc_hash(1787677545).builtin_ctz() << '\n';
+    simulator(b);
+    //run_miner(argc, argv);
+
+
     /*std::ifstream input("ready_dataset.txt");
     std::vector<std::pair<fast_string, Statistic>> blocks;
     for (int i = 0; i < 651; i++) {

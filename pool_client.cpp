@@ -106,6 +106,7 @@ block PoolClient::get_new_block(bool &new_miner_task) {
             merkle_branch.emplace_back(std::string(value));
         }
 
+        std::cout << data["params"][5] << std::endl;
         version = hex_to_integer(reverse_str(std::string(data["params"][5])));
         nbits = hex_to_integer(std::string(data["params"][6]));
         timestamp = hex_to_integer(std::string(data["params"][7]));
@@ -133,6 +134,7 @@ block PoolClient::get_new_block(bool &new_miner_task) {
     b.extranonce1 = extranonce1;
     b.extranonce2_size = extranonce2_size;
     b.merkle_branch = merkle_branch;
+    std::cout << version << std::endl;
 
     b.build_extranonce2();
 
