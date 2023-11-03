@@ -4,11 +4,11 @@
 
 using namespace std::chrono;
 
+#include "assert.hpp"
 #include "bits_manipulation.hpp"
 #include "constants.hpp"
 #include "miner.hpp"
 #include "pool_client.hpp"
-#include "assert.hpp"
 
 // reading from blocks dataset
 // [80 bytes of best block bytes data, statistic]
@@ -318,25 +318,21 @@ void run_miner(int argc, char **argv) {
     }
 }
 
-#include "genome_neurons.hpp"
+#include "openn/
 
 int main(int argc, char **argv) {
-    std::ifstream input("2.txt");
-    auto [block_bytes_data, state] = read_block_data(input);
-    lite_block b(block_bytes_data);
-    std::cout << bytes_to_hex(reverse_str(b.calc_hash(1787677545))) << std::endl;
-    std::cout << b.calc_hash(1787677545).builtin_ctz() << '\n';
-    simulator(b);
     //run_miner(argc, argv);
 
-
-    /*std::ifstream input("ready_dataset.txt");
+    /* #include "super_search.hpp"
+     * std::ifstream input("new_super_dataset.txt");
     std::vector<std::pair<fast_string, Statistic>> blocks;
-    for (int i = 0; i < 651; i++) {
+    for (int i = 0; i < 1633; i++) {
         auto [block_bytes_data, state] = read_block_data(input);
         //std::cout << reverse_str(bytes_to_hex(state.get_best().second.to_str())) << std::endl;
         blocks.push_back({block_bytes_data, state});
-    }*/
+    }
+
+    super_search(blocks);*/
 
     // >39 нулевых байт в хеше мы не получили
 
@@ -347,7 +343,7 @@ int main(int argc, char **argv) {
     /*std::vector<uint32_t> counts(32);
     uint32_t total = 0;
     for (auto [block_bytes_data, state]: blocks) {
-        for (uint32_t index = 35; index < Statistic::LEN; index++) {
+        for (uint32_t index = 30; index < Statistic::LEN; index++) {
             if (state.counts[index] > 0) {
                 total++;
                 uint32_t nonce = state.exemplar[index];

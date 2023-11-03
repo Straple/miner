@@ -6,8 +6,13 @@ std::mt19937 &get_random_engine() {
     return rnd;
 }
 
+void set_seed_random_engine(uint64_t seed) {
+    get_random_engine() = std::mt19937(seed);
+}
+
 uint32_t rnd() {
-    return get_random_engine()();
+    static std::uniform_int_distribution<uint32_t> distrib(0, UINT32_MAX);
+    return distrib(get_random_engine());
 }
 
 int rnd(int left, int right) {
@@ -15,7 +20,7 @@ int rnd(int left, int right) {
     return static_cast<int>(rnd() % static_cast<uint32_t>(right - left + 1)) + left;
 }
 
-double rnd_chance(){
+double rnd_chance() {
     return static_cast<double>(rnd()) / UINT32_MAX;
 }
 

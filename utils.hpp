@@ -4,6 +4,8 @@
 
 std::mt19937 &get_random_engine();
 
+void set_seed_random_engine(uint64_t seed);
+
 uint32_t rnd();
 
 // [left, right]

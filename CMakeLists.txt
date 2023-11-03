@@ -1,4 +1,4 @@
-cmake_minimum_required(VERSION 3.23)
+#cmake_minimum_required(VERSION 3.23)
 project(miner)
 
 set(CMAKE_CXX_STANDARD 17)
@@ -20,7 +20,7 @@ include_directories(${Boost_INCLUDE_DIRS})
 #ENDIF()
 
 add_executable(miner
-        main.cpp sha256/openssl_sha256.cpp bits_manipulation.cpp block.cpp utils.cpp pool_client.cpp miner.cpp logger.cpp lite_block.cpp fast_string.cpp statistic.cpp genome_neurons.cpp)
+        main.cpp sha256/openssl_sha256.cpp bits_manipulation.cpp block.cpp utils.cpp pool_client.cpp miner.cpp logger.cpp lite_block.cpp fast_string.cpp statistic.cpp)
 
 target_link_libraries(miner OpenSSL::SSL)
 
