@@ -318,10 +318,45 @@ void run_miner(int argc, char **argv) {
     }
 }
 
-#include "openn/
+#include "neural_network.cpp"
 
 int main(int argc, char **argv) {
     //run_miner(argc, argv);
+
+    {
+        std::ifstream input("3.txt");
+        std::vector<std::pair<fast_string, Statistic>> blocks;
+        for (int i = 0; i < 1683; i++) {
+            //std::cout << i << std::endl;
+            auto [block_bytes_data, state] = read_block_data(input);
+            //std::cout << reverse_str(bytes_to_hex(state.get_best().second.to_str())) << std::endl;
+            blocks.push_back({block_bytes_data, state});
+        }
+
+        blocks.resize(blocks.size() / 10);
+
+        std::ofstream output("data.txt");
+        // 80 bytes
+        // 4 bytes in the end for nonce
+        // 76 bytes * 8 bits = 608 bits
+        for (int i = 0; i < 608; i++) {
+            output << "x" << i + 1 << ';';
+        }
+        output << "y\n";
+
+        int cnt = 0;
+        for (auto [block_bytes_data, state]: blocks) {
+            for (int i = 0; i < 608; i++) {
+                output << int((uint8_t(block_bytes_data[i / 8]) >> (i % 8)) & 1) << ';';
+            }
+            bool x = state.get_best().second.builtin_ctz() >= 33;
+            cnt += x;
+            output << x << '\n';
+        }
+        std::cout << cnt * 100.0 / blocks.size() << "%\n";
+    }
+
+    run_neural_network();
 
     /* #include "super_search.hpp"
      * std::ifstream input("new_super_dataset.txt");
@@ -337,6 +372,7 @@ int main(int argc, char **argv) {
     // >39 нулевых байт в хеше мы не получили
 
     // 27-й бит очень похож, чтобы был 1 в лучших nonce
+
 
     // 0, 1, 7, 8, 9, 10, 15, 17, 20, 22, 23, 24, 27, 29, 30
 
